@@ -1,3 +1,7 @@
 # Örkky pely
 
-Dunno
+## How to run
+
+```bash
+cargo run
+```
