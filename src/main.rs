@@ -88,9 +88,6 @@ fn main() {
     	.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,
 			..Default::default()
-		}).set(AssetPlugin {
-			watch_for_changes: true,
-			asset_folder: "../../assets".to_string(),
 		}))
 		.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
 		.add_plugin(FpsControllerPlugin)
@@ -346,7 +343,7 @@ fn setup(
     });
 
 	commands.spawn(SceneBundle {
-        scene: asset_server.load("orkki2.glb#Scene0"),
+        scene: asset_server.load("demon.glb#Scene0"),
         transform: Transform::from_xyz(-10.0, 1.0, 0.0),
         ..default()
     });
