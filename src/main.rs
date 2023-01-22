@@ -1,8 +1,13 @@
 use std::{f32::consts::{TAU, PI}};
 
-use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode};
+use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, input::keyboard::KeyboardInput};
 use bevy_fps_controller::controller::{FpsControllerPlugin, FpsController, FpsControllerInput, LogicalPlayer, RenderPlayer};
 use bevy_rapier3d::prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, GravityScale, Sleeping, AdditionalMassProperties, ActiveEvents, RigidBody, LockedAxes, Collider, Ccd, Velocity};
+use character::{Character, CharacterType};
+
+use crate::character::spawn_camera_person;
+
+mod character;
 
 #[derive(Default, Component)]
 struct PlayerHands;
@@ -18,7 +23,8 @@ fn main() {
 		.add_plugin(FpsControllerPlugin)
 		.add_startup_system(setup)
 		.add_startup_system(initial_grab_cursor)
-		.add_system(move_animations)
+		.add_system(character_animations)
+		// .add_system(move_animations)
 		.run();
 }
 
@@ -43,29 +49,55 @@ fn initial_grab_cursor(mut windows: ResMut<Windows>) {
     }
 }
 
-fn move_animations(
-	time: Res<Time>,
-	mut set: ParamSet<(
-		Query<&Transform, With<RenderPlayer>>,
-		Query<&mut Transform, With<PlayerHands>>,
-	)>
+// fn move_animations(
+// 	time: Res<Time>,
+// 	mut set: ParamSet<(
+// 		Query<&Transform, With<RenderPlayer>>,
+// 		Query<&mut Transform, With<PlayerHands>>,
+// 	)>
+// ) {
+// 	let transform = {
+// 		let p0 = set.p0();
+// 		let transform = p0.single();
+// 		transform.clone()
+// 	};
+
+// 	let mut p1 = set.p1();
+// 	let mut transform2 = p1.single_mut();
+
+// 	transform2.translation.x = transform.translation.x;
+// 	transform2.translation.y = transform.translation.y - 0.4;
+// 	transform2.translation.z = transform.translation.z;
+
+// 	let rot = transform.rotation;
+
+// 	transform2.rotation = rot * Quat::from_rotation_y(PI);
+// }
+
+fn character_animations(
+	input: Res<Input<KeyCode>>,
+	mut query: Query<(&Character, &mut AnimationPlayer)>
 ) {
-	let transform = {
-		let p0 = set.p0();
-		let transform = p0.single();
-		transform.clone()
-	};
+	input.get_just_pressed().for_each(|key| {
+		match key {
+			KeyCode::W | KeyCode::A | KeyCode::S | KeyCode::D => {
+				log::info!("move key clicked");
 
-	let mut p1 = set.p1();
-	let mut transform2 = p1.single_mut();
+				for (character, mut player) in query.iter_mut() {
+					log::info!("animation player found");
 
-	transform2.translation.x = transform.translation.x;
-	transform2.translation.y = transform.translation.y - 0.4;
-	transform2.translation.z = transform.translation.z;
+					if character.character_type == CharacterType::Npc {
+						continue;
+					}
 
-	let rot = transform.rotation;
+					log::info!("set walking animation for player");
 
-	transform2.rotation = rot * Quat::from_rotation_y(PI);
+					player.start(character.walk_animation.clone());
+				}
+			}
+			_ => {}
+		}
+	});
 }
 
 fn setup(
@@ -156,22 +188,24 @@ fn setup(
 	.insert(RigidBody::Fixed)
 	.insert(Transform::IDENTITY);
 
-	commands.spawn((
-		SceneBundle {
-			scene: asset_server.load("smg_fps_animations.glb#Scene0"),
-			transform: Transform::from_xyz(10.0, 1.4, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-			..default()
-		},
-		PlayerHands,
-	));
+	spawn_camera_person(asset_server, commands);
 
-	commands.spawn((
-        Camera3dBundle {
-			transform: Transform::from_xyz(10.0, 1.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-			..default()
-		},
-        RenderPlayer(0)
-    ));
+	// commands.spawn((
+	// 	SceneBundle {
+	// 		scene: asset_server.load("smg_fps_animations.glb#Scene0"),
+	// 		transform: Transform::from_xyz(10.0, 1.4, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+	// 		..default()
+	// 	},
+	// 	PlayerHands,
+	// ));
+
+	// commands.spawn((
+    //     Camera3dBundle {
+	// 		transform: Transform::from_xyz(10.0, 1.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+	// 		..default()
+	// 	},
+    //     RenderPlayer(0)
+    // ));
 
     // camera
     // commands.spawn(Camera3dBundle {
