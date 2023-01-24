@@ -1,20 +1,18 @@
 use std::f32::consts::PI;
 
+use bevy::gltf::Gltf;
 use bevy::prelude::AnimationClip;
+use bevy::prelude::AnimationPlayer;
 use bevy::prelude::AssetServer;
 use bevy::prelude::BuildChildren;
 use bevy::prelude::Camera3dBundle;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Handle;
-use bevy::prelude::Quat;
-use bevy::prelude::Res;
-use bevy::prelude::SpatialBundle;
-use bevy::prelude::Transform;
-use bevy::prelude::Vec3;
-use bevy::prelude::default;
+use bevy::prelude::*;
+use bevy::scene::Scene;
 use bevy::scene::SceneBundle;
 use bevy_fps_controller::controller::RenderPlayer;
+
+use crate::assets::Animation;
+use crate::assets::UnloadedAssets;
 
 #[derive(Clone, PartialEq)]
 pub enum CharacterType {
@@ -22,65 +20,109 @@ pub enum CharacterType {
 	Npc,
 }
 
-#[derive(Clone, Component)]
-pub struct Character {
-	pub idle_animation: Handle<AnimationClip>,
-	pub walk_animation: Handle<AnimationClip>,
-	pub running_animation: Handle<AnimationClip>,
-	pub reload_animation: Handle<AnimationClip>,
-	pub moving: bool,
-	pub character_type: CharacterType,
+#[derive(Clone)]
+pub enum MoveState {
+	Idle,
+	Walking,
+	Running,
 }
 
-pub fn spawn_camera_person(
-	asset_server: Res<AssetServer>,
-	mut commands: Commands
+#[derive(Clone, Component, Debug)]
+pub struct Character {
+	pub scene: Handle<Scene>,
+	pub asset_name: String,
+	pub idle_animation: String,
+	pub walking_animation: String,
+	pub running_animation: String,
+	pub shooting_animation: String,
+	pub reload_animation: String,
+	pub moving: bool
+}
+
+#[derive(Clone, Component)]
+pub struct You;
+
+pub fn spawn_character(
+	mut commands: Commands,
+	character: Character,
 ) {
-	let you = Character {
-		idle_animation: asset_server.load("smg_fps_animations.glb#Animation0"),
-		walk_animation: asset_server.load("smg_fps_animations.glb#Animation1"),
-		running_animation: asset_server.load("smg_fps_animations.glb#Animation2"),
-		reload_animation: asset_server.load("smg_fps_animations.glb#Animation3"),
-		moving: false,
-		character_type: CharacterType::You,
-	};
+	let scene = character.scene.clone();
 
-	// commands.insert_resource(you.idle_animation.clone());
-	// commands.insert_resource(you.walk_animation.clone());
-	// commands.insert_resource(you.running_animation.clone());
-	// commands.insert_resource(you.reload_animation.clone());
-
-	commands.spawn((
+	let id = commands.spawn((
 		SpatialBundle {
 			..Default::default()
 		},
-        RenderPlayer(0)
+        RenderPlayer(0),
+		character,
+		You
 	)).with_children(|parent| {
-		parent.spawn((
+		let child_schene_bundle_id = parent.spawn(
 			SceneBundle {
-				scene: asset_server.load("smg_fps_animations.glb#Scene0"),
+				scene: scene,
 				transform: Transform {
 					rotation: Quat::from_rotation_y(PI),
 					translation: Vec3::new(0.0, -0.5, 0.0),
 					..Default::default()
 				},
 				..default()
-			},
-			you,
-		));
+			}
+		).id();
 
-		parent.spawn((
-			Camera3dBundle {
-				//transform: Transform::from_xyz(10.0, 1.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-				// transform: Transform {
-				// 	rotation: Quat::from_rotation_y(PI),
-				// 	..Default::default()
-				// },
-				..default()
-			},
-			
-		));
-	});
+		log::info!("child_schene_bundle_id: {:?}", child_schene_bundle_id);
 
-	// commands
+		let camera_id = parent.spawn((
+			Camera3dBundle::default(),
+		)).id();
+
+		log::info!("camera_id: {:?}", camera_id);
+	}).id();
+
+	log::info!("Spawned character with id: {:?}", id);
+}
+
+pub fn spawn_camera_person(
+	asset_server: Res<AssetServer>,
+	mut unloaded: ResMut<UnloadedAssets>,
+	mut commands: Commands
+) {
+	let asset = asset_server.load("smg_fps_animations.glb");
+
+	unloaded.0.push(("smg_fps_animations.glb".to_string(), asset.clone()));
+
+	let you = Character {
+		scene: asset_server.load("smg_fps_animations.glb#Scene0"),
+		asset_name: "smg_fps_animations.glb".to_string(),
+		idle_animation: "Rig|KDW_DPose_Idle".to_string(),
+		walking_animation: "Rig|KDW_Walk".to_string(),
+		running_animation: "Rig|KDW_Run".to_string(),
+		reload_animation: "Rig|KDW_Reload_full".to_string(),
+		shooting_animation: "Rig|KDW_Shot".to_string(),
+		moving: false,
+	};
+
+	spawn_character(commands, you);
+
+	// commands.spawn((
+	// 	SpatialBundle {
+	// 		..Default::default()
+	// 	},
+    //     RenderPlayer(0)
+	// )).with_children(|parent| {
+	// 	parent.spawn((
+	// 		SceneBundle {
+	// 			scene: asset_server.load("smg_fps_animations.glb#Scene0"),
+	// 			transform: Transform {
+	// 				rotation: Quat::from_rotation_y(PI),
+	// 				translation: Vec3::new(0.0, -0.5, 0.0),
+	// 				..Default::default()
+	// 			},
+	// 			..default()
+	// 		},
+	// 		you,
+	// 	));
+
+	// 	parent.spawn((
+	// 		Camera3dBundle::default(),
+	// 	));
+	// });
 }
