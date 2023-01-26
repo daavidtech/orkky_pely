@@ -1,24 +1,30 @@
 use std::{f32::consts::{TAU, PI}};
 
-use animations::{link_animation_players, AnimationEntityLink};
-use assets::{AssetManager, UnloadedAssets, AnimationStore};
-use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, input::keyboard::KeyboardInput, utils::{HashMap, HashSet}, gltf::Gltf, core_pipeline::core_2d::graph::input};
+use animations::{link_animation_players, AnimationEntityLink, AnimationStore, change_character_animation};
+use assets::{UnloadedAssets, AssetPacks, AssetPack};
+use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, input::keyboard::KeyboardInput, utils::{HashMap, HashSet}, gltf::{Gltf, GltfMesh}, core_pipeline::core_2d::graph::input};
 use bevy_fps_controller::controller::{FpsControllerPlugin, FpsController, FpsControllerInput, LogicalPlayer, RenderPlayer};
-use bevy_rapier3d::prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, GravityScale, Sleeping, AdditionalMassProperties, ActiveEvents, RigidBody, LockedAxes, Collider, Ccd, Velocity};
-use character::{Character, CharacterType, You};
+use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, GravityScale, Sleeping, AdditionalMassProperties, ActiveEvents, RigidBody, LockedAxes, Collider, Ccd, Velocity, ComputedColliderShape}, rapier::prelude::ColliderShape};
+use character::{Character, CharacterType};
+use types::You;
 
-use crate::character::spawn_camera_person;
+use crate::{character::spawn_camera_person, spawn::Spawner, types::AddCollidingMesh};
 
 mod character;
 mod assets;
 mod character_visuals;
 mod animations;
+mod npc;
+mod spawn;
+mod types;
+mod player;
 
 fn main() {
     App::new()
 		.insert_resource(RapierConfiguration::default())
 		.insert_resource(UnloadedAssets::default())
 		.insert_resource(AnimationStore::default())
+		.insert_resource(AssetPacks::default())
     	.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,
 			..Default::default()
@@ -31,105 +37,239 @@ fn main() {
 		.add_system(detect_unique_characters)
 		.add_system(manage_assets)
 		.add_system(load_character_assets)
-		.add_system(handle_keyboard)
-		.add_system(handle_mouse)
 		.add_system(link_animation_players)
-		.add_system(find_character_players)
-		// .add_system(move_animations)
+		.add_system(handle_your_keyboard_input)
+		.add_system(handle_your_mouse_input)
+		.add_system(change_character_animation)
+		.add_system(inspect_asset_packs)
 		.run();
 }
 
-fn find_character_players(
-	mut player_query: Query<&mut AnimationPlayer>,
-	mut query: Query<(&Character, &AnimationEntityLink)>
+fn inspect_asset_packs(
+	assets_gltf: Res<Assets<Gltf>>,
+	assets_gltf_mesh: Res<Assets<GltfMesh>>,
+	assets_mesh: Res<Assets<Mesh>>,
+	query: Query<(Entity, &AddCollidingMesh)>,
+	mut commands: Commands,
 ) {
-	// for (char, link) in query.iter_mut() {
-	// 	log::info!("Character: {:?}", char);
-	// 	log::info!("Link: {:?}", link);
+	for (entity, add_collider_mesh) in query.iter() {
+		// commands.entity(item).remove::<AddCollidingMesh>();
+		let pack = match assets_gltf.get(&add_collider_mesh.glft) {
+			Some(pack) => {
+				pack
+			},
+			None => continue,
+		};
 
-	// 	if let Ok(mut player) = player_query.get_mut(link.0) {
-	// 		//Stuff
+		for mesh in pack.meshes.iter() {
+			let mesh = match assets_gltf_mesh.get(mesh) {
+				Some(m) => m,
+				None => continue,
+			};
 
-	// 		log::info!("Player found");
-	// 	}
-	// }
+			log::info!("found mesh {:?}", mesh);
+
+			for primite in &mesh.primitives {
+				let mesh = assets_mesh.get(&primite.mesh).unwrap();
+
+				let collider = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::TriMesh);
+
+				match collider {
+					Some(collider) => {
+						log::info!("found collider {:?}", collider);
+
+						commands.entity(entity).with_children(|parent| {
+							parent.spawn(collider);
+						});
+					},
+					None => {
+						log::info!("mesh collider is invalid");
+					}
+				}
+			}
+		}
+
+		commands.entity(entity).remove::<AddCollidingMesh>();
+	}
 }
 
-fn handle_mouse(
-	buttons: Res<Input<MouseButton>>,
-	animation_store: Res<AnimationStore>,
-	mut player_query: Query<&mut AnimationPlayer>,
-	mut query: Query<(&Character, &AnimationEntityLink)>
+fn handle_your_keyboard_input(
+	keyboard_input: Res<Input<KeyCode>>,
+	mut query: Query<(&mut Character, &You)>
 ) {
-	let pressed = buttons.get_just_pressed();
+	let pressed = keyboard_input.get_just_pressed();
 
-	for it in pressed {
-		match it {
+	for key in pressed {
+		match &key {
+			KeyCode::W | KeyCode::A | KeyCode::S | KeyCode::D => {
+				for (mut char, _) in query.iter_mut() {
+					char.moving = true;
+				}
+			},
+			KeyCode::R => {
+				for (mut char, _) in query.iter_mut() {
+					char.reloading = true;
+				}
+			},
+			KeyCode::Space => {
+				for (mut char, _) in query.iter_mut() {
+					char.jump = true;
+				}
+			},
+			KeyCode::LShift => {
+				for (mut char, _) in query.iter_mut() {
+					char.running = true;
+				}
+			},
+			_ => {}
+		}
+	}
+
+	let released = keyboard_input.get_just_released();
+
+	for key in released {
+		match &key {
+			KeyCode::W | KeyCode::A | KeyCode::S | KeyCode::D => {
+				for (mut char, _) in query.iter_mut() {
+					char.moving = false;
+				}
+			},
+			KeyCode::R => {
+				for (mut char, _) in query.iter_mut() {
+					char.reloading = false;
+				}
+			},
+			KeyCode::Space => {
+				for (mut char, _) in query.iter_mut() {
+					char.jump = false;
+				}
+			},
+			KeyCode::LShift => {
+				for (mut char, _) in query.iter_mut() {
+					char.running = false;
+				}
+			},
+			_ => {}
+		}
+	}
+}
+
+fn handle_your_mouse_input(
+	mouse_input: Res<Input<MouseButton>>,
+	mut query: Query<(&mut Character, &You)>
+) {
+	let pressed = mouse_input.get_just_pressed();
+
+	for key in pressed {
+		match &key {
 			MouseButton::Left => {
-				for (char, link) in query.iter_mut() {
-					if let Ok(mut player) = player_query.get_mut(link.0) {
-						match animation_store.0.get(format!("{}-{}", char.asset_name, char.shooting_animation).as_str()) {
-							Some(animation) => {
-								player.start(animation.clone()).repeat();
-							}
-							None => {
-								log::info!("No animation found for {}", char.shooting_animation);
-							}
-						}
-					}
+				for (mut char, _) in query.iter_mut() {
+					char.shooting = true;
 				}
 			},
 			MouseButton::Right => {
-				log::info!("Right mouse button pressed");
+				for (mut char, _) in query.iter_mut() {
+					char.aiming = true;
+				}
+			},
+			_ => {}
+		}
+	}
+
+	let released = mouse_input.get_just_released();
+
+	for key in released {
+		match &key {
+			MouseButton::Left => {
+				for (mut char, _) in query.iter_mut() {
+					char.shooting = false;
+				}
+			},
+			MouseButton::Right => {
+				for (mut char, _) in query.iter_mut() {
+					char.aiming = false;
+				}
 			},
 			_ => {}
 		}
 	}
 }
 
-fn handle_keyboard(
-	input: Res<Input<KeyCode>>,
-	animation_store: Res<AnimationStore>,
-	mut player_query: Query<&mut AnimationPlayer>,
-	mut query: Query<(&Character, &AnimationEntityLink)>
-	// mut query: Query<(&mut AnimationPlayer, &Character), With<You>>
-) {
-	let pressed = input.get_just_pressed();
+// fn handle_mouse(
+// 	buttons: Res<Input<MouseButton>>,
+// 	animation_store: Res<AnimationStore>,
+// 	mut player_query: Query<&mut AnimationPlayer>,
+// 	mut query: Query<(&Character, &AnimationEntityLink)>
+// ) {
+// 	let pressed = buttons.get_just_pressed();
 
-	for it in pressed {
-		match it {
-			KeyCode::W | KeyCode::A | KeyCode::S | KeyCode::D => {
-				for (char, link) in query.iter_mut() {
-					if let Ok(mut player) = player_query.get_mut(link.0) {
-						match animation_store.0.get(format!("{}-{}", char.asset_name, char.walking_animation).as_str()) {
-							Some(animation) => {
-								player.start(animation.clone()).repeat();
-							}
-							None => {
-								log::info!("No animation found for {}", char.walking_animation);
-							}
-						}
-					}
-				}
-			}
-			KeyCode::R => {
-				for (char, link) in query.iter_mut() {
-					if let Ok(mut player) = player_query.get_mut(link.0) {
-						match animation_store.0.get(format!("{}-{}", char.asset_name, char.reload_animation).as_str()) {
-							Some(animation) => {
-								player.start(animation.clone());
-							}
-							None => {
-								log::info!("No animation found for {}", char.reload_animation);
-							}
-						}
-					}
-				}
-			}
-			_ => {}
-		}
-	}
-}
+// 	for it in pressed {
+// 		match it {
+// 			MouseButton::Left => {
+// 				for (char, link) in query.iter_mut() {
+// 					if let Ok(mut player) = player_query.get_mut(link.0) {
+// 						match animation_store.0.get(format!("{}-{}", char.asset_name, char.shooting_animation).as_str()) {
+// 							Some(animation) => {
+// 								player.start(animation.clone()).repeat();
+// 							}
+// 							None => {
+// 								log::info!("No animation found for {}", char.shooting_animation);
+// 							}
+// 						}
+// 					}
+// 				}
+// 			},
+// 			MouseButton::Right => {
+// 				log::info!("Right mouse button pressed");
+// 			},
+// 			_ => {}
+// 		}
+// 	}
+// }
+
+// fn handle_keyboard(
+// 	input: Res<Input<KeyCode>>,
+// 	animation_store: Res<AnimationStore>,
+// 	mut player_query: Query<&mut AnimationPlayer>,
+// 	mut query: Query<(&Character, &AnimationEntityLink)>
+// 	// mut query: Query<(&mut AnimationPlayer, &Character), With<You>>
+// ) {
+// 	let pressed = input.get_just_pressed();
+
+// 	for it in pressed {
+// 		match it {
+// 			KeyCode::W | KeyCode::A | KeyCode::S | KeyCode::D => {
+// 				for (char, link) in query.iter_mut() {
+// 					if let Ok(mut player) = player_query.get_mut(link.0) {
+// 						match animation_store.0.get(format!("{}-{}", char.asset_name, char.walking_animation).as_str()) {
+// 							Some(animation) => {
+// 								player.start(animation.clone()).repeat();
+// 							}
+// 							None => {
+// 								log::info!("No animation found for {}", char.walking_animation);
+// 							}
+// 						}
+// 					}
+// 				}
+// 			}
+// 			KeyCode::R => {
+// 				for (char, link) in query.iter_mut() {
+// 					if let Ok(mut player) = player_query.get_mut(link.0) {
+// 						match animation_store.0.get(format!("{}-{}", char.asset_name, char.reload_animation).as_str()) {
+// 							Some(animation) => {
+// 								player.start(animation.clone());
+// 							}
+// 							None => {
+// 								log::info!("No animation found for {}", char.reload_animation);
+// 							}
+// 						}
+// 					}
+// 				}
+// 			}
+// 			_ => {}
+// 		}
+// 	}
+// }
 
 fn load_character_assets(
 	query: Query<&Character>,
@@ -188,11 +328,9 @@ fn detect_unique_characters(
 }
 
 fn manage_assets(
-	mut commands: Commands,
 	mut unloaded_assets: ResMut<UnloadedAssets>,
 	mut animations: ResMut<AnimationStore>,
 	assets_gltf: Res<Assets<Gltf>>,
-	assets_animation_clips: Res<Assets<AnimationClip>>,
 ) {
 	unloaded_assets.0.retain(|(name, p)| {
 		if let Some(gltf) = assets_gltf.get(&p) {			
@@ -200,7 +338,10 @@ fn manage_assets(
 
 			for (animation_name, clip) in gltf.named_animations.iter() {
 				log::info!("{} has animation {}", name, animation_name);	
-				animations.0.insert(format!("{}-{}", name, animation_name), clip.clone());			
+
+				animations.set_animation(name, animation_name, clip.clone());
+
+				// animations.0.insert(format!("{}-{}", name, animation_name), clip.clone());			
 			}
 
 			return false;
@@ -236,16 +377,10 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 	mut unloaded: ResMut<UnloadedAssets>,
+	mut asset_packs: ResMut<AssetPacks>,
 	asset_server: Res<AssetServer>
 ) {
 	log::info!("startup setup");
-
-	let mut asset_manager = AssetManager::new();
-	asset_manager.add_asset("smg_fps_animations", asset_server.load("smg_fps_animations.glb"));
-	asset_manager.add_asset("fox", asset_server.load("fox.glb"));
-	asset_manager.add_asset("orkki", asset_server.load("orkki.glb"));
-
-	commands.insert_resource(asset_manager);
 
     // plane
     commands.spawn(PbrBundle {
@@ -260,51 +395,19 @@ fn setup(
         transform: Transform::from_xyz(0.0, 0.5, 0.0),
         ..default()
     })
-	.insert(Collider::cuboid(1.0, 10.0, 20.0))
+	.insert(Collider::cuboid(4.0, 10.0, 4.0))
 	.insert(RigidBody::Fixed)
 	.insert(Transform::IDENTITY);
     // light
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 6000.0,
+            intensity: 15000.0,
             shadows_enabled: true,
             ..default()
         },
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
-
-	// commands.spawn(SceneBundle {
-    //     scene: asset_server.load("orkki.glb#Scene0"),
-    //     transform: Transform::from_xyz(-15.0, 1.0, 0.0),
-    //     ..default()
-    // });
-
-	// commands.spawn(SceneBundle {
-    //     scene: asset_server.load("demon.glb#Scene0"),
-    //     transform: Transform::from_xyz(-10.0, 1.0, 0.0),
-    //     ..default()
-    // });
-
-    commands.spawn((
-        Collider::capsule(Vec3::Y * 0.5, Vec3::Y * 1.5, 0.5),
-        ActiveEvents::COLLISION_EVENTS,
-        Velocity::zero(),
-        RigidBody::Dynamic,
-        Sleeping::disabled(),
-        LockedAxes::ROTATION_LOCKED,
-        AdditionalMassProperties::Mass(1.0),
-        GravityScale(0.0),
-        Ccd { enabled: true }, // Prevent clipping when going fast
-        TransformBundle::from_transform(Transform::from_xyz(10.0, 0.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y)),
-        LogicalPlayer(0),
-        FpsControllerInput {
-            pitch: -TAU / 12.0,
-            yaw: TAU * 5.0 / 8.0,
-            ..default()
-        },
-        FpsController { ..default() }
-    ));
 
 	commands.spawn_empty()
 	.insert(PbrBundle {
@@ -327,63 +430,31 @@ fn setup(
 	.insert(RigidBody::Fixed)
 	.insert(Transform::IDENTITY);
 
-	// commands.spawn((
-	// 	SceneBundle {
-	// 		scene: asset_server.load("smg_fps_animations.glb#Scene0"),
-	// 		transform: Transform::from_xyz(10.0, 1.4, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-	// 		..default()
-	// 	},
-	// 	PlayerHands,
-	// ));
+	let castle_asset: Handle<Gltf> = asset_server.load("castle.glb");
+	let castle_scene = asset_server.load("castle.glb#Scene0");
 
-	// commands.spawn((
-    //     Camera3dBundle {
-	// 		transform: Transform::from_xyz(10.0, 1.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-	// 		..default()
-	// 	},
-    //     RenderPlayer(0)
-    // ));
+	commands.spawn((
+		SceneBundle {
+			scene: castle_scene,
+			transform: Transform {
+				translation: Vec3::new(0.0, 0.0, 0.0),
+				scale: Vec3::splat(0.25),
+				..Default::default()
+			},
+			..default()
+		},
+		// AddCollidingMesh {
+		// 	glft: castle_asset,
+		// }
+	));
 
-	// commands.spawn((
-	// 	// SceneBundle {
-	// 	// 	scene: asset_server.load("smg_fps_animations.glb#Scene0"),
-	// 	// 	transform: Transform {
-	// 	// 		rotation: Quat::from_rotation_y(PI),
-	// 	// 		translation: Vec3::new(10.0,1.0, 10.0),
-	// 	// 		..Default::default()
-	// 	// 	},
-	// 	// 	..default()
-	// 	// },
-	// 	SceneBundle {
-	// 		scene: asset_server.load("smg_fps_animations.glb#Scene0"),
-	// 		transform: Transform::from_xyz(10.0, 1.4, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-	// 		..default()
-	// 	},
-	// 	Character,
-	// ));
-
-	spawn_camera_person(asset_server,  unloaded, commands);
-
-	// commands.spawn((
-	// 	SceneBundle {
-	// 		scene: asset_server.load("smg_fps_animations.glb#Scene0"),
-	// 		transform: Transform::from_xyz(10.0, 1.4, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-	// 		..default()
-	// 	},
-	// 	PlayerHands,
-	// ));
-
-	// commands.spawn((
-    //     Camera3dBundle {
-	// 		transform: Transform::from_xyz(10.0, 1.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-	// 		..default()
-	// 	},
-    //     RenderPlayer(0)
-    // ));
-
-    // camera
-    // commands.spawn(Camera3dBundle {
-    //     transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-    //     ..default()
-    // });
+	Spawner::new()
+		.set_you(true)
+		.set_asset("smg_fps_animations.glb")
+		.set_idle_animation("Rig|KDW_DPose_Idle")
+		.set_walking_animation("Rig|KDW_Walk")
+		.set_running_animation("Rig|KDW_Run")
+		.set_reload_animation("Rig|KDW_Reload_full")
+		.set_shooting_animation("Rig|KDW_Shot")
+		.spawn(commands, asset_server, unloaded);
 }
