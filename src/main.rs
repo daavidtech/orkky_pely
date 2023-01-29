@@ -1,11 +1,12 @@
-use std::{f32::consts::{TAU, PI}};
-
 use animations::{link_animation_players, AnimationEntityLink, AnimationStore, change_character_animation};
 use assets::{UnloadedAssets, AssetPacks, AssetPack};
-use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, input::keyboard::KeyboardInput, utils::{HashMap, HashSet}, gltf::{Gltf, GltfMesh}, core_pipeline::core_2d::graph::input};
+use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, input::keyboard::KeyboardInput, utils::{HashMap, HashSet}, gltf::{Gltf, GltfMesh}, core_pipeline::core_2d::graph::input, asset::HandleId};
 use bevy_fps_controller::controller::{FpsControllerPlugin, FpsController, FpsControllerInput, LogicalPlayer, RenderPlayer};
 use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, GravityScale, Sleeping, AdditionalMassProperties, ActiveEvents, RigidBody, LockedAxes, Collider, Ccd, Velocity, ComputedColliderShape}, rapier::prelude::ColliderShape};
 use character::{Character, CharacterType};
+use inspector::inspect_asset_packs;
+use map_loader::MapLoader;
+use notify::{Watcher, RecursiveMode};
 use types::You;
 
 use crate::{character::spawn_camera_person, spawn::Spawner, types::AddCollidingMesh};
@@ -18,13 +19,24 @@ mod npc;
 mod spawn;
 mod types;
 mod player;
+mod inspector;
+mod map;
+mod map_loader;
 
 fn main() {
+	// let map_loader = MapLoader::new("./maps/map.json");
+
+	// let changes = map_loader.get_map_changes();
+
+	let changes_receiver = map_loader::create_map_loader("./maps/map.json");
+
+
     App::new()
 		.insert_resource(RapierConfiguration::default())
 		.insert_resource(UnloadedAssets::default())
 		.insert_resource(AnimationStore::default())
 		.insert_resource(AssetPacks::default())
+		.insert_resource(changes_receiver)
     	.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,
 			..Default::default()
@@ -41,11 +53,11 @@ fn main() {
 		.add_system(handle_your_keyboard_input)
 		.add_system(handle_your_mouse_input)
 		.add_system(change_character_animation)
-		.add_system(inspect_asset_packs)
+		// .add_system(inspect_asset_packs)
 		.run();
 }
 
-fn inspect_asset_packs(
+fn add_collisions(
 	assets_gltf: Res<Assets<Gltf>>,
 	assets_gltf_mesh: Res<Assets<GltfMesh>>,
 	assets_mesh: Res<Assets<Mesh>>,
@@ -408,6 +420,10 @@ fn setup(
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
+	commands.insert_resource(AmbientLight {
+		brightness: 0.5,
+		color: Color::hex("E6EED6").unwrap(),
+	});
 
 	commands.spawn_empty()
 	.insert(PbrBundle {

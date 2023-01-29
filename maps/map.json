@@ -1,0 +1,53 @@
+{
+	"templates": [
+		{
+			"name": "Orc",
+			"asset": "orkki.glb",
+			"fps_camera_location": [0, 1.5, 0],
+			"third_person_camera_location": [0, 1.5, 0],
+			"initial_rotation_y": 0,
+			"initial_transform": [0, 0, 0],
+			"walk_speed": 0.1
+		},
+		{
+			"name": "Villager",
+			"asset": "narttu.glb"
+		},
+		{
+			"name": "FPS_person",
+			"asset": "smg_fps_animations.glb",
+			"iddle_animiation": "Rig|KDW_DPose_Idle",
+			"walk_animation": "Rig|KDW_Walk",
+			"run_animation": "Rig|KDW_Run",
+			"reload_animation": "Rig|KDW_Reload_full",
+			"shoot_animation": "Rig|KDW_Shoot"
+		},
+		{
+			"name": "Castle",
+			"asset": "castle.glb",
+			"collider": "AABB"
+		},
+		{
+			"name": "Box",
+			"asset": "box.glb",
+			"phycics": "Ragdoll"
+		},
+		{
+			"name": "Tree",
+			"asset": "tree.glb"
+		}
+	],
+	"entities": [
+		{
+			"template": "Castle",
+			"initial_position": [0, 0, 0],
+			"initial_rotation": [0, 0, 0]
+		},
+		{
+			"template": "Orc"
+		},
+		{
+			"template": "Orc"
+		}
+	]
+}
