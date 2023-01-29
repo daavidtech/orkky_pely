@@ -8,7 +8,8 @@ pub struct MapEntity {
 	pub template: String,
 	pub position: Option<[f32; 3]>,
 	pub rotation: Option<[f32; 3]>,
-	pub scale: Option<f32>
+	pub scale: Option<f32>,
+	pub camera: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

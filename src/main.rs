@@ -1,3 +1,5 @@
+use std::sync::mpsc;
+
 use animations::{link_animation_players, AnimationEntityLink, AnimationStore, change_character_animation};
 use assets::{UnloadedAssets, AssetPacks, AssetPack};
 use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, input::keyboard::KeyboardInput, utils::{HashMap, HashSet}, gltf::{Gltf, GltfMesh}, core_pipeline::core_2d::graph::input, asset::HandleId};
@@ -5,9 +7,10 @@ use bevy_fps_controller::controller::{FpsControllerPlugin, FpsController, FpsCon
 use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, GravityScale, Sleeping, AdditionalMassProperties, ActiveEvents, RigidBody, LockedAxes, Collider, Ccd, Velocity, ComputedColliderShape}, rapier::prelude::ColliderShape};
 use character::{Character, CharacterType};
 use inspector::inspect_asset_packs;
-use map_loader::MapLoader;
+use map::MapChange;
+use map_loader::{MapLoader, MapChangesReceiver};
 use notify::{Watcher, RecursiveMode};
-use types::You;
+use types::{You, MapTemplates};
 
 use crate::{character::spawn_camera_person, spawn::Spawner, types::AddCollidingMesh};
 
@@ -22,6 +25,7 @@ mod player;
 mod inspector;
 mod map;
 mod map_loader;
+mod entities;
 
 fn main() {
 	// let map_loader = MapLoader::new("./maps/map.json");
@@ -53,8 +57,65 @@ fn main() {
 		.add_system(handle_your_keyboard_input)
 		.add_system(handle_your_mouse_input)
 		.add_system(change_character_animation)
+		.add_system(handle_map_changes)
 		// .add_system(inspect_asset_packs)
 		.run();
+}
+
+fn handle_map_changes(
+	chnages_receiver: Res<MapChangesReceiver>,
+	mut map_templates: ResMut<MapTemplates>, 
+	mut done: Local<bool>,
+) {	
+	if *done {
+		return;
+	}
+
+	let chnages_receiver = chnages_receiver.rx.lock().unwrap();
+
+	let mut changes = vec![];
+
+	loop {
+		match chnages_receiver.try_recv() {
+			Ok(change) => {
+				log::info!("mapchange {:?}", change);
+
+				match change {
+					MapChange::NewMapEntity(entity) => {
+						
+					},
+        			MapChange::NewMapTemplate(template) => {
+						map_templates.templates.insert(template.name.clone(), template);
+					},
+				}
+			},
+			Err(err) => {
+				match err {
+					mpsc::TryRecvError::Empty => {
+						break;
+					},
+					mpsc::TryRecvError::Disconnected => {
+						log::info!("changes disconnected");
+	
+						*done = true;
+	
+						return;
+					},
+				}
+			}
+		};
+	}
+	
+	for change in changes {
+		log::info!("change {:?}", change);
+
+		match change {
+			MapChange::NewMapEntity(entity) => {
+				log::info!("add entity {:?}", entity);
+			},
+			_ => {}
+		}
+	}
 }
 
 fn add_collisions(

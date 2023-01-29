@@ -4,7 +4,7 @@ use std::sync::mpsc;
 use std::thread;
 
 use bevy::prelude::Resource;
-use notify::ReadDirectoryChangesWatcher;
+use notify::WatcherKind::ReadDirectoryChangesWatcher;
 use notify::RecursiveMode;
 use notify::Watcher;
 
@@ -38,7 +38,7 @@ use crate::map::MapChanges;
 // }
 
 struct Worker {
-	watcher: ReadDirectoryChangesWatcher
+	watcher: notify::RecommendedWatcher,
 }
 
 pub fn create_map_loader(path: &str) -> MapChangesReceiver {
@@ -71,14 +71,14 @@ pub fn create_map_loader(path: &str) -> MapChangesReceiver {
 
 #[derive(Resource)]
 pub struct MapChangesReceiver {
-	rx: Mutex<mpsc::Receiver<MapChange>>
+	pub rx: Mutex<mpsc::Receiver<MapChange>>
 }
 
 pub struct MapLoader {
 	watch_changes: bool,
 	path: String,
 	map_changes: MapChanges,
-	watcher: ReadDirectoryChangesWatcher,
+	watcher: notify::RecommendedWatcher,
 	// last_map: Map
 }
 
