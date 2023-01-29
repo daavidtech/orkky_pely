@@ -5,7 +5,7 @@ use bevy::scene::Scene;
 use bevy::scene::SceneBundle;
 use bevy_fps_controller::controller::RenderPlayer;
 
-use crate::assets::UnloadedAssets;
+use crate::gltf::UnloadedAssets;
 use crate::types::You;
 
 #[derive(Clone, PartialEq)]

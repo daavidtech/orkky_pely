@@ -44,10 +44,12 @@
 			"initial_rotation": [0, 0, 0]
 		},
 		{
-			"template": "Orc"
+			"template": "Orc",
+			"initial_position": [5, 1, 5] 
 		},
 		{
-			"template": "Orc"
+			"template": "Orc",
+			"initial_position": [-5, 1, 5]
 		}
 	]
 }

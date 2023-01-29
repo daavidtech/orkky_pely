@@ -6,8 +6,8 @@ use serde::Serialize;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MapEntity {
 	pub template: String,
-	pub position: Option<[f32; 3]>,
-	pub rotation: Option<[f32; 3]>,
+	pub initial_position: Option<[f32; 3]>,
+	pub initial_rotation: Option<[f32; 3]>,
 	pub scale: Option<f32>,
 	pub camera: Option<String>,
 }

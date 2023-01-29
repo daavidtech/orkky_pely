@@ -9,7 +9,7 @@ use bevy_fps_controller::controller::RenderPlayer;
 use bevy_rapier3d::prelude::*;
 
 use crate::animations::AnimationEntityLink;
-use crate::assets::UnloadedAssets;
+use crate::gltf::UnloadedAssets;
 use crate::character::Character;
 use crate::types::You;
 

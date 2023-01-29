@@ -1,21 +1,20 @@
 use std::sync::mpsc;
 
-use animations::{link_animation_players, AnimationEntityLink, AnimationStore, change_character_animation};
-use assets::{UnloadedAssets, AssetPacks, AssetPack};
-use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, input::keyboard::KeyboardInput, utils::{HashMap, HashSet}, gltf::{Gltf, GltfMesh}, core_pipeline::core_2d::graph::input, asset::HandleId};
-use bevy_fps_controller::controller::{FpsControllerPlugin, FpsController, FpsControllerInput, LogicalPlayer, RenderPlayer};
-use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, GravityScale, Sleeping, AdditionalMassProperties, ActiveEvents, RigidBody, LockedAxes, Collider, Ccd, Velocity, ComputedColliderShape}, rapier::prelude::ColliderShape};
-use character::{Character, CharacterType};
-use inspector::inspect_asset_packs;
+use animations::{link_animation_players, AnimationStore, change_character_animation};
+use gltf::{UnloadedAssets, unpack_gltf};
+use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, gltf::{Gltf, GltfMesh}};
+use bevy_fps_controller::controller::{FpsControllerPlugin};
+use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, RigidBody,Collider, ComputedColliderShape}};
+use character::{Character};
+use entities::{handle_map_changes, handle_needs_template, give_assets};
 use map::MapChange;
-use map_loader::{MapLoader, MapChangesReceiver};
-use notify::{Watcher, RecursiveMode};
-use types::{You, MapTemplates};
+use map_loader::{MapChangesReceiver};
+use types::{You, MapTemplates, GltfRegister, AssetPacks};
 
-use crate::{character::spawn_camera_person, spawn::Spawner, types::AddCollidingMesh};
+use crate::{spawn::Spawner, types::AddCollidingMesh};
 
 mod character;
-mod assets;
+mod gltf;
 mod character_visuals;
 mod animations;
 mod npc;
@@ -39,6 +38,8 @@ fn main() {
 		.insert_resource(RapierConfiguration::default())
 		.insert_resource(UnloadedAssets::default())
 		.insert_resource(AnimationStore::default())
+		.insert_resource(MapTemplates::default())
+		.insert_resource(GltfRegister::default())
 		.insert_resource(AssetPacks::default())
 		.insert_resource(changes_receiver)
     	.add_plugins(DefaultPlugins.set(LogPlugin {
@@ -58,65 +59,69 @@ fn main() {
 		.add_system(handle_your_mouse_input)
 		.add_system(change_character_animation)
 		.add_system(handle_map_changes)
-		// .add_system(inspect_asset_packs)
+		.add_system(handle_needs_template)
+		.add_system(unpack_gltf)
+		.add_system(give_assets)
 		.run();
 }
 
-fn handle_map_changes(
-	chnages_receiver: Res<MapChangesReceiver>,
-	mut map_templates: ResMut<MapTemplates>, 
-	mut done: Local<bool>,
-) {	
-	if *done {
-		return;
-	}
 
-	let chnages_receiver = chnages_receiver.rx.lock().unwrap();
 
-	let mut changes = vec![];
+// fn handle_map_changes(
+// 	chnages_receiver: Res<MapChangesReceiver>,
+// 	mut map_templates: ResMut<MapTemplates>, 
+// 	mut done: Local<bool>,
+// ) {	
+// 	if *done {
+// 		return;
+// 	}
 
-	loop {
-		match chnages_receiver.try_recv() {
-			Ok(change) => {
-				log::info!("mapchange {:?}", change);
+// 	let chnages_receiver = chnages_receiver.rx.lock().unwrap();
 
-				match change {
-					MapChange::NewMapEntity(entity) => {
+// 	let mut changes = vec![];
+
+// 	loop {
+// 		match chnages_receiver.try_recv() {
+// 			Ok(change) => {
+// 				log::info!("mapchange {:?}", change);
+
+// 				match change {
+// 					MapChange::NewMapEntity(entity) => {
 						
-					},
-        			MapChange::NewMapTemplate(template) => {
-						map_templates.templates.insert(template.name.clone(), template);
-					},
-				}
-			},
-			Err(err) => {
-				match err {
-					mpsc::TryRecvError::Empty => {
-						break;
-					},
-					mpsc::TryRecvError::Disconnected => {
-						log::info!("changes disconnected");
+// 					},
+//         			MapChange::NewMapTemplate(template) => {
+// 						map_templates.templates.insert(template.name.clone(), template);
+// 					},
+// 				}
+// 			},
+// 			Err(err) => {
+// 				match err {
+// 					mpsc::TryRecvError::Empty => {
+// 						break;
+// 					},
+// 					mpsc::TryRecvError::Disconnected => {
+// 						log::info!("changes disconnected");
 	
-						*done = true;
+// 						*done = true;
 	
-						return;
-					},
-				}
-			}
-		};
-	}
+// 						return;
+// 					},
+// 				}
+// 			}
+// 		};
+// 	}
 	
-	for change in changes {
-		log::info!("change {:?}", change);
+// 	for change in changes {
+// 		log::info!("change {:?}", change);
 
-		match change {
-			MapChange::NewMapEntity(entity) => {
-				log::info!("add entity {:?}", entity);
-			},
-			_ => {}
-		}
-	}
-}
+// 		match change {
+// 			MapChange::NewMapEntity(entity) => {
+// 				log::info!("add entity {:?}", entity);
+// 			},
+// 			_ => {}
+// 		}
+// 	}
+// }
 
 fn add_collisions(
 	assets_gltf: Res<Assets<Gltf>>,
@@ -450,7 +455,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 	mut unloaded: ResMut<UnloadedAssets>,
-	mut asset_packs: ResMut<AssetPacks>,
 	asset_server: Res<AssetServer>
 ) {
 	log::info!("startup setup");
