@@ -51,16 +51,42 @@ pub fn create_map_loader(path: &str) -> MapChangesReceiver {
 
 		let map = Map::load(&path);
 
-		for entity in map.entities {
-			println!("new entity {}", entity.template);
-
-			tx.send(MapChange::NewMapEntity(entity));
+		if let Some(entities) = map.entities {
+			for entity in entities {
+				println!("new entity {}", entity.template);
+	
+				tx.send(MapChange::NewMapEntity(entity));
+			}
 		}
 
-		for template in map.templates {
-			println!("new template {}", template.name);
+		if let Some(template) = map.templates {
+			for template in template {
+				println!("new template {}", template.name);
+	
+				tx.send(MapChange::NewMapTemplate(template));
+			}
+		}
 
-			tx.send(MapChange::NewMapTemplate(template));
+		if let Some(shapes) = map.shapes {
+			for shape in shapes {
+				println!("new shape {:?}", shape);
+	
+				tx.send(MapChange::NewMapShape(shape));
+			}
+		}
+
+		if let Some(light) = map.lights {
+			for light in light {
+				println!("new light {:?}", light);
+	
+				tx.send(MapChange::NewLight(light));
+			}
+		}
+
+		if let Some(ambient_light) = map.ambient_light {
+			println!("new ambient light {:?}", ambient_light);
+
+			tx.send(MapChange::NewAmbientLight(ambient_light));
 		}
 	});
 

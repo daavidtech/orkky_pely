@@ -11,7 +11,7 @@
 			"collider": {
 				"Cuboid": {
 					"x": 0.3,
-					"y": 0.3,
+					"y": 1,
 					"z": 0.3
 				}
 			}
@@ -52,13 +52,54 @@
 		},
 		{
 			"template": "Orc",
-			"initial_position": [5, 2, 5],
-			"scale": 3
+			"initial_position": [20, 2, 5],
+			"scale": 2
 		},
 		{
 			"template": "Orc",
-			"initial_position": [-5, 2, 5],
-			"scale": 3 
+			"initial_position": [10, 2, 5],
+			"scale": 2 
+		},
+		{
+			"template": "Orc",
+			"initial_position": [0, 2, 5],
+			"scale": 2 
+		},
+		{
+			"template": "Orc",
+			"initial_position": [-10, 2, 5],
+			"scale": 2 
+		},
+		{
+			"template": "Orc",
+			"initial_position": [-20, 2, 5],
+			"scale": 2 
 		}
-	]
+	],
+	"lights": [
+		{
+			"Point": {
+				"color": "ffffff",
+				"intensity": 100000,
+				"location": [0, 10, 0]
+			}
+		}	
+	],
+	"shapes": [
+		{
+			"Box": {
+				"min_x": -40.0,
+				"max_x": 40.0,
+				"min_y": -0.25,
+				"max_y": 0.25,
+				"min_z": -40.0,
+				"max_z": 40.0,
+				"collider": true
+			}
+		}
+	],
+	"ambient_light": {
+		"color": "ffffff",
+		"brightness": 0.5
+	}
 }

@@ -6,7 +6,7 @@ use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, g
 use bevy_fps_controller::controller::{FpsControllerPlugin};
 use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, RigidBody,Collider, ComputedColliderShape}};
 use character::{Character};
-use entities::{handle_map_changes, handle_needs_template, give_assets};
+use map_changes::{handle_map_changes, handle_needs_template, give_assets};
 use map::MapChange;
 use map_loader::{MapChangesReceiver};
 use types::{You, MapTemplates, GltfRegister, AssetPacks};
@@ -24,7 +24,7 @@ mod player;
 mod inspector;
 mod map;
 mod map_loader;
-mod entities;
+mod map_changes;
 
 fn main() {
 	// let map_loader = MapLoader::new("./maps/map.json");
@@ -460,11 +460,11 @@ fn setup(
 	log::info!("startup setup");
 
     // plane
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        ..default()
-    });
+    // commands.spawn(PbrBundle {
+    //     mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
+    //     material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+    //     ..default()
+    // });
     // cube
     commands.spawn(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0 })),
@@ -476,19 +476,19 @@ fn setup(
 	.insert(RigidBody::Fixed)
 	.insert(Transform::IDENTITY);
     // light
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            intensity: 15000.0,
-            shadows_enabled: true,
-            ..default()
-        },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..default()
-    });
-	commands.insert_resource(AmbientLight {
-		brightness: 0.5,
-		color: Color::hex("E6EED6").unwrap(),
-	});
+    // commands.spawn(PointLightBundle {
+    //     point_light: PointLight {
+    //         intensity: 15000.0,
+    //         shadows_enabled: true,
+    //         ..default()
+    //     },
+    //     transform: Transform::from_xyz(4.0, 8.0, 4.0),
+    //     ..default()
+    // });
+	// commands.insert_resource(AmbientLight {
+	// 	brightness: 0.5,
+	// 	color: Color::hex("E6EED6").unwrap(),
+	// });
 
 	commands.spawn_empty()
 	.insert(PbrBundle {

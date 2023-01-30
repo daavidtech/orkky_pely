@@ -49,9 +49,76 @@ pub struct MapTemplate {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MapCube {
+	pub size: f32
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MapPlane {
+	pub size: f32,
+	pub material: Option<String>,
+	pub location: Option<[f32; 3]>
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MapQuad {
+	pub size: [f32; 2]
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MapCircle {
+	pub radius: f32,
+	pub vertices: Option<usize>
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MapBox {
+	pub min_x: f32,
+	pub max_x: f32,
+	pub min_y: f32,
+	pub max_y: f32,
+	pub min_z: f32,
+	pub max_z: f32,
+	pub collider: Option<bool>
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum MapShape {
+	Cube(MapCube),
+	Plane(MapPlane),
+	Quad(MapQuad),
+	Circle(MapCircle),
+	Box(MapBox)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PointMapLight {
+	pub color: String,
+	pub intensity: Option<f32>,
+	pub range: Option<f32>,
+	pub radius: Option<f32>,
+	pub shadows_enabled: Option<bool>,
+	pub location: Option<[f32; 3]>
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum MapLight {
+	Point(PointMapLight)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AmbientLight {
+	pub color: String,
+	pub brightness: f32
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Map {
-	pub entities: Vec<MapEntity>,
-	pub templates: Vec<MapTemplate>
+	pub entities: Option<Vec<MapEntity>>,
+	pub templates: Option<Vec<MapTemplate>>,
+	pub shapes: Option<Vec<MapShape>>,
+	pub lights: Option<Vec<MapLight>>,
+	pub ambient_light: Option<AmbientLight>,
 }
 
 impl Map {
@@ -66,6 +133,9 @@ impl Map {
 pub enum MapChange {
 	NewMapEntity(MapEntity),
 	NewMapTemplate(MapTemplate),
+	NewMapShape(MapShape),
+	NewLight(MapLight),
+	NewAmbientLight(AmbientLight)
 }
 
 #[derive(Debug, Clone, Resource)]

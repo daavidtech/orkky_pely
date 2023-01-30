@@ -5,9 +5,11 @@ use bevy::gltf::Gltf;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+use crate::map::MapLight;
 use crate::map::MapEntityCollider;
 use crate::map::MapChange;
 use crate::map::MapEntity;
+use crate::map::MapShape;
 use crate::map::MapTemplate;
 use crate::map_loader::MapChangesReceiver;
 use crate::types::AssetPacks;
@@ -162,13 +164,167 @@ pub fn handle_needs_template(
 	}
 }
 
+fn spawn_light(
+	commands: &mut Commands,
+	light: MapLight
+) {
+	match light {
+		MapLight::Point(point) => {
+			log::info!("Spawning point light: {:?}", point);
+
+			// commands.spawn(PointLightBundle {
+			// 	point_light: PointLight {
+			// 		intensity: 15000.0,
+			// 		shadows_enabled: true,
+			// 		..default()
+			// 	},
+			// 	transform: Transform::from_xyz(4.0, 8.0, 4.0),
+			// 	..default()
+			// });
+
+			let mut light_bundle = PointLightBundle {
+				point_light: PointLight {
+					color: Color::hex(point.color).unwrap(),
+					..Default::default()
+				},
+				..Default::default()
+			};
+
+			if let Some(intensity) = point.intensity {
+				light_bundle.point_light.intensity = intensity;
+			}
+
+			if let Some(range) = point.range {
+				light_bundle.point_light.range = range;
+			}
+
+			if let Some(radius) = point.radius {
+				light_bundle.point_light.radius = radius;
+			}
+
+			if let Some(shadows_enabled) = point.shadows_enabled {
+				light_bundle.point_light.shadows_enabled = shadows_enabled;
+			}
+
+			if let Some(location) = point.location {
+				light_bundle.transform = Transform::from_xyz(location[0], location[1], location[2]);
+			}
+
+			commands.spawn(light_bundle);
+		}
+	}
+}
+
+fn spawn_shape(
+	commands: &mut Commands,
+	meshes: &mut ResMut<Assets<Mesh>>,
+	materials: &mut ResMut<Assets<StandardMaterial>>,
+	shape: MapShape
+) {
+	log::info!("spawning shape: {:?}", shape);
+
+	match shape {
+		MapShape::Cube(cube) => {
+			commands.spawn(
+				PbrBundle {
+					mesh: meshes.add(Mesh::from(shape::Cube { size: cube.size })),
+					..Default::default()
+				}
+			);
+		},
+		MapShape::Plane(plane) => {
+			log::info!("spawning plane {:?}", plane);
+			
+			let mut plane_bundle = PbrBundle {
+				mesh: meshes.add(Mesh::from(shape::Plane { size: plane.size })),
+				material: materials.add(
+					StandardMaterial {
+						base_color: Color::rgb(0.3, 0.5, 0.3),
+						..Default::default()
+					}
+				),
+				..Default::default()
+			};
+
+			// if let Some(material) = plane.material {
+			// 	plane_bundle.material = materials.add(Color::hex(material).unwrap().into());
+			// }
+
+			if let Some(location) = plane.location {
+				plane_bundle.transform = Transform::from_xyz(location[0], location[1], location[2]);
+			}
+
+			commands.spawn(plane_bundle);
+		},
+		MapShape::Quad(quad) => {
+			commands.spawn(
+				PbrBundle {
+					mesh: meshes.add(Mesh::from(shape::Quad { 
+						size: Vec2::from_slice(&quad.size),
+						..Default::default() 
+					})),
+					..Default::default()
+				}
+			);
+		},
+		MapShape::Circle(circle) => {
+			commands.spawn(
+				PbrBundle {
+					mesh: meshes.add(Mesh::from(shape::Circle {
+						radius: circle.radius,
+						vertices: match circle.vertices {
+							Some(vertices) => vertices,
+							None => 32
+						},
+						..Default::default()
+					})),
+					..Default::default()
+				}
+			);
+		},
+		MapShape::Box(box_shape) => {
+			let mut entity_commands = commands.spawn(
+				PbrBundle {
+					mesh: meshes.add(Mesh::from(shape::Box {
+						min_x: box_shape.min_x,
+						min_y: box_shape.min_y,
+						min_z: box_shape.min_z,
+						max_x: box_shape.max_x,
+						max_y: box_shape.max_y,
+						max_z: box_shape.max_z,
+						..Default::default()
+					})),
+					material: materials.add(StandardMaterial {
+						base_color: Color::hex("E6EED6").unwrap(),
+						..default()
+					}),
+					..Default::default()
+				}
+			);
+
+			if let Some(true) = box_shape.collider {
+				let hx = box_shape.max_x - box_shape.min_x;
+				let hy = box_shape.max_y - box_shape.min_y;
+				let hz = box_shape.max_z - box_shape.min_z;
+
+				entity_commands.insert((
+					Collider::cuboid(hx, hy, hz),
+					RigidBody::Fixed
+				));
+			}
+		},
+	}
+}
+
 pub fn handle_map_changes(
 	mut commands: Commands,
 	chnages_receiver: Res<MapChangesReceiver>,
 	mut map_templates: ResMut<MapTemplates>, 
 	mut gltf_register: ResMut<GltfRegister>,
 	mut done: Local<bool>,
-	asset_server: Res<AssetServer>
+	asset_server: Res<AssetServer>,
+	mut meshes: ResMut<Assets<Mesh>>,
+	mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
 	if *done {
 		return;
@@ -201,6 +357,18 @@ pub fn handle_map_changes(
 						}
 
 						map_templates.templates.insert(template.name.clone(), template);
+					},
+					MapChange::NewMapShape(shape) => {
+						spawn_shape(&mut commands, &mut meshes, &mut materials, shape);
+					},
+					MapChange::NewLight(ligth) => {
+						spawn_light(&mut commands, ligth);
+					},
+					MapChange::NewAmbientLight(args) => {
+						commands.insert_resource(AmbientLight {
+							brightness: args.brightness,
+							color: Color::hex(args.color).unwrap(),
+						});
 					},
 				}
 			},
