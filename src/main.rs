@@ -511,23 +511,23 @@ fn setup(
 	.insert(RigidBody::Fixed)
 	.insert(Transform::IDENTITY);
 
-	let castle_asset: Handle<Gltf> = asset_server.load("castle.glb");
-	let castle_scene = asset_server.load("castle.glb#Scene0");
+	// let castle_asset: Handle<Gltf> = asset_server.load("castle.glb");
+	// let castle_scene = asset_server.load("castle.glb#Scene0");
 
-	commands.spawn((
-		SceneBundle {
-			scene: castle_scene,
-			transform: Transform {
-				translation: Vec3::new(0.0, 0.0, 0.0),
-				scale: Vec3::splat(0.25),
-				..Default::default()
-			},
-			..default()
-		},
-		// AddCollidingMesh {
-		// 	glft: castle_asset,
-		// }
-	));
+	// commands.spawn((
+	// 	SceneBundle {
+	// 		scene: castle_scene,
+	// 		transform: Transform {
+	// 			translation: Vec3::new(0.0, 0.0, 0.0),
+	// 			scale: Vec3::splat(0.25),
+	// 			..Default::default()
+	// 		},
+	// 		..default()
+	// 	},
+	// 	// AddCollidingMesh {
+	// 	// 	glft: castle_asset,
+	// 	// }
+	// ));
 
 	Spawner::new()
 		.set_you(true)

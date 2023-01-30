@@ -7,7 +7,14 @@
 			"third_person_camera_location": [0, 1.5, 0],
 			"initial_rotation_y": 0,
 			"initial_transform": [0, 0, 0],
-			"walk_speed": 0.1
+			"walk_speed": 0.1,
+			"collider": {
+				"Cuboid": {
+					"x": 0.3,
+					"y": 0.3,
+					"z": 0.3
+				}
+			}
 		},
 		{
 			"name": "Villager",
@@ -45,11 +52,13 @@
 		},
 		{
 			"template": "Orc",
-			"initial_position": [5, 1, 5] 
+			"initial_position": [5, 2, 5],
+			"scale": 3
 		},
 		{
 			"template": "Orc",
-			"initial_position": [-5, 1, 5]
+			"initial_position": [-5, 2, 5],
+			"scale": 3 
 		}
 	]
 }

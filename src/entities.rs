@@ -3,7 +3,9 @@ use std::sync::mpsc;
 use bevy::ecs::system::EntityCommands;
 use bevy::gltf::Gltf;
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
+use crate::map::MapEntityCollider;
 use crate::map::MapChange;
 use crate::map::MapEntity;
 use crate::map::MapTemplate;
@@ -60,6 +62,38 @@ fn handle_map_template(
 			});
 		},
 		_ => {}
+	}
+
+	// Collider::cuboid(hx, hy, hz)
+
+	match &template.collider {
+		Some(collider) => {
+			match collider {
+				MapEntityCollider::AABB => {
+
+				},
+				MapEntityCollider::Capsule { a, b, radius } => {
+					log::info!("spawning capsule collider: {:?} {:?} {:?}", a, b, radius);
+
+					commands.insert((
+						RigidBody::Dynamic,
+						AdditionalMassProperties::Mass(1.0),
+						Collider::capsule(Vec3::Y * *a, Vec3::Y * *b, *radius)
+					));
+				},
+				MapEntityCollider::Cuboid { x, y, z } => {
+					log::info!("spawning cuboid collider: {:?} {:?} {:?}", x, y, z);
+
+					commands.insert((
+						RigidBody::Dynamic,
+						AdditionalMassProperties::Mass(1.0),
+						Collider::cuboid(*x, *y, *z)
+					));
+				},
+				_ => {}
+			}
+		},
+		None => {},
 	}
 }
 

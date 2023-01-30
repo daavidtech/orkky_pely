@@ -2,6 +2,21 @@ use bevy::prelude::Resource;
 use serde::Deserialize;
 use serde::Serialize;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+// #[serde(tag = "type")]
+pub enum MapEntityCollider {
+	AABB,
+	Capsule {
+		a: f32,
+		b: f32,
+		radius: f32
+	},
+	Cuboid {
+		x: f32,
+		y: f32,
+		z: f32
+	},
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MapEntity {
@@ -29,7 +44,8 @@ pub struct MapTemplate {
 	pub initial_rotation_z: Option<f32>,
 	pub initial_transform: Option<[f32; 3]>,
 	pub walk_speed: Option<f32>,
-	pub run_speed: Option<f32>
+	pub run_speed: Option<f32>,
+	pub collider: Option<MapEntityCollider>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
