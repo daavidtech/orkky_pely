@@ -2,9 +2,12 @@ use std::sync::mpsc;
 
 use bevy::ecs::system::EntityCommands;
 use bevy::gltf::Gltf;
+use bevy::pbr::wireframe::Wireframe;
 use bevy::prelude::*;
+use bevy_fps_controller::controller::LogicalPlayer;
 use bevy_rapier3d::prelude::*;
 
+use crate::map::MapEntityPhysics;
 use crate::map::MapLight;
 use crate::map::MapEntityCollider;
 use crate::map::MapChange;
@@ -12,6 +15,7 @@ use crate::map::MapEntity;
 use crate::map::MapShape;
 use crate::map::MapTemplate;
 use crate::map_loader::MapChangesReceiver;
+use crate::types::AddCollidingMesh;
 use crate::types::AssetPacks;
 use crate::types::GltfRegister;
 use crate::types::MapTemplates;
@@ -22,12 +26,15 @@ use crate::types::UnloadedGltfAsset;
 fn handle_map_template(
 	commands: &mut EntityCommands,
 	template: &MapTemplate,
-	entity: &MapEntity
+	entity: &MapEntity,
+	meshes: &mut ResMut<Assets<Mesh>>
 ) {
 	match &template.asset {
 		Some(asset) => {
 			commands.insert(NeedsAsset {
 				asset: asset.clone(),
+				add_colliding_mesh: template.automatic_collision_mesh.unwrap_or_default(),
+				initial_transform: template.initial_transform.clone()
 			});
 		},
 		None => {}
@@ -79,30 +86,79 @@ fn handle_map_template(
 
 					commands.insert((
 						RigidBody::Dynamic,
-						AdditionalMassProperties::Mass(1.0),
 						Collider::capsule(Vec3::Y * *a, Vec3::Y * *b, *radius)
 					));
 				},
 				MapEntityCollider::Cuboid { x, y, z } => {
 					log::info!("spawning cuboid collider: {:?} {:?} {:?}", x, y, z);
 
+					let half_x = *x / 2.0;
+					let half_y = *y / 2.0;
+					let half_z = *z / 2.0;
+
 					commands.insert((
-						RigidBody::Dynamic,
-						AdditionalMassProperties::Mass(1.0),
+						Restitution::coefficient(0.0),
 						Collider::cuboid(*x, *y, *z)
 					));
+
+					// commands.with_children(|parent| {
+					// 	parent.spawn((
+					// 		PbrBundle {
+					// 			mesh: meshes.add(Mesh::from(
+					// 				shape::Box {
+					// 					min_x: -*x,
+					// 					min_y: -*y,
+					// 					min_z: -*z,
+					// 					max_x: *x,
+					// 					max_y: *y,
+					// 					max_z: *z,
+					// 				}
+					// 			)),
+					// 			..Default::default()
+					// 		},
+					// 		Wireframe
+					// 	));
+					// });
+
 				},
 				_ => {}
 			}
 		},
 		None => {},
 	}
+
+	match &template.physics {
+		Some(physics) => {
+			match physics {
+				MapEntityPhysics::Dynamic => {
+					commands.insert(RigidBody::Dynamic);
+				},
+				MapEntityPhysics::Static => {
+					commands.insert(RigidBody::Fixed);
+				}
+			}
+		},
+		None => {}
+	}
+
+	// if &template.automatic_collision_mesh {
+	// 	commands.insert(
+	// 		AddCollidingMesh {
+	// 			glft: template.asset.clone(),
+	// 		}
+	// 	);
+	// }
+
+	// if let Some(mass) = template.mass {
+	// 	commands.insert(AdditionalMassProperties::Mass(mass));
+	// }
 }
 
 fn spaw_map_entity(
 	commands: &mut Commands,
 	map_templates: &MapTemplates,
-	entity: &MapEntity
+	entity: &MapEntity,
+	meshes: &mut ResMut<Assets<Mesh>>,
 ) {
 	log::info!("Spawning map entity: {}", entity.template);
 
@@ -132,7 +188,7 @@ fn spaw_map_entity(
 
 	match map_templates.templates.get(&entity.template) {
 		Some(template) => {
-			handle_map_template(&mut new_component, template, entity);
+			handle_map_template(&mut new_component, template, entity, meshes);
 		},
 		None => {
 			new_component.insert(
@@ -143,19 +199,26 @@ fn spaw_map_entity(
 			);
 		}
 	}
+
+	if let Some(true) = entity.player {
+		new_component.insert(
+			LogicalPlayer(0)
+		);
+	}
 }
 
 pub fn handle_needs_template(
 	mut commands: Commands,
 	template_map: Res<MapTemplates>,
-	query: Query<(Entity, &NeedsTemplate)>
+	query: Query<(Entity, &NeedsTemplate)>,
+	mut meshes: ResMut<Assets<Mesh>>
 ) {
 	for (entity, needs_template) in query.iter() {
 		match template_map.templates.get(&needs_template.template) {
 			Some(template) => {
 				let mut entity_commands = commands.entity(entity);
 				
-				handle_map_template(&mut entity_commands, template, &needs_template.map_enitity);
+				handle_map_template(&mut entity_commands, template, &needs_template.map_enitity, &mut meshes);
 
 				entity_commands.remove::<NeedsTemplate>();
 			},
@@ -302,10 +365,31 @@ fn spawn_shape(
 				}
 			);
 
+			// entity_commands.with_children(|parent| {
+			// 	parent.spawn((
+			// 		PbrBundle {
+			// 			mesh: meshes.add(Mesh::from(
+			// 				shape::Box {
+			// 					min_x: -box_shape.min_x,
+			// 					min_y: -box_shape.min_y,
+			// 					min_z: -box_shape.min_z,
+			// 					max_x: box_shape.max_x,
+			// 					max_y: box_shape.max_y,
+			// 					max_z: box_shape.max_z,
+			// 				}
+			// 			)),
+			// 			..Default::default()
+			// 		},
+			// 		Wireframe
+			// 	));
+			// });
+
 			if let Some(true) = box_shape.collider {
-				let hx = box_shape.max_x - box_shape.min_x;
-				let hy = box_shape.max_y - box_shape.min_y;
-				let hz = box_shape.max_z - box_shape.min_z;
+				let hx = (box_shape.max_x - box_shape.min_x) / 2.0;
+				let hy = (box_shape.max_y - box_shape.min_y) / 2.0;
+				let hz = (box_shape.max_z - box_shape.min_z) / 2.0;
+
+				log::info!("spawning box collider: {:?}", (hx, hy, hz));
 
 				entity_commands.insert((
 					Collider::cuboid(hx, hy, hz),
@@ -339,7 +423,7 @@ pub fn handle_map_changes(
 
 				match change {
 					MapChange::NewMapEntity(entity) => {
-						spaw_map_entity(&mut commands, &map_templates, &entity)
+						spaw_map_entity(&mut commands, &map_templates, &entity, &mut meshes)
 					},
         			MapChange::NewMapTemplate(template) => {
 						match &template.asset {
@@ -402,13 +486,27 @@ pub fn give_assets(
 
 				let mut entity_commands = commands.entity(entity);
 
-				entity_commands.with_children(|parent| {
-					parent.spawn(
-						SceneBundle {
-							scene: scene,
-							..Default::default()
+				if needs_asset.add_colliding_mesh {
+					log::info!("adding collision mesh for entity: {:?}", entity);
+
+					entity_commands.insert(
+						AddCollidingMesh {
+							glft: asset_pack.gltf.clone(),
 						}
 					);
+				}
+
+				entity_commands.with_children(|parent| {
+					let mut bundle = SceneBundle {
+						scene: scene,
+						..Default::default()
+					};
+
+					if let Some(transform) = needs_asset.initial_transform {
+						bundle.transform.translation = Vec3::new(transform[0], transform[1], transform[2]);
+					}
+
+					parent.spawn(bundle);
 				});
 
 				entity_commands.remove::<NeedsAsset>();

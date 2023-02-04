@@ -17,7 +17,10 @@ pub fn unpack_gltf(
 ) {
 	gltf_register.unloaded.retain(|gltf_asset| {
 		if let Some(gltf) = gltf_assets.get(&gltf_asset.gltf) {
-			let mut asset_pack = AssetPack::default();
+			let mut asset_pack = AssetPack { 
+				gltf: gltf_asset.gltf.clone(),
+				..Default::default()
+			};
 
 			gltf.named_scenes.iter().for_each(|(scene_name, scene)| {
 				asset_pack.scenes.insert(scene_name.to_string(), scene.to_owned());

@@ -122,7 +122,7 @@ impl Spawner {
 			AdditionalMassProperties::Mass(1.0),
 			GravityScale(0.0),
 			Ccd { enabled: true }, // Prevent clipping when going fast
-			TransformBundle::from_transform(Transform::from_xyz(-5.0, 0.0, -5.0).looking_at(Vec3::ZERO, Vec3::Y)),
+			TransformBundle::from_transform(Transform::from_xyz(-5.0, 20.0, -5.0).looking_at(Vec3::ZERO, Vec3::Y)),
 			LogicalPlayer(0),
 			FpsControllerInput {
 				pitch: -TAU / 12.0,

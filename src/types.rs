@@ -25,6 +25,8 @@ pub struct NeedsTemplate {
 #[derive(Clone, Component)]
 pub struct NeedsAsset {
 	pub asset: String,
+	pub add_colliding_mesh: bool,
+	pub initial_transform: Option<[f32; 3]>,
 }
 
 #[derive(Clone, Component)]
@@ -50,6 +52,7 @@ pub struct GltfRegister {
 
 #[derive(Clone, Default)]
 pub struct AssetPack {
+	pub gltf: Handle<Gltf>,
 	pub scenes: HashMap<String, Handle<Scene>>,
 	pub animations: HashMap<String, Handle<AnimationClip>>
 }

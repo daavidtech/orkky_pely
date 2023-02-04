@@ -14,7 +14,8 @@ pub enum MapEntityCollider {
 	Cuboid {
 		x: f32,
 		y: f32,
-		z: f32
+		z: f32,
+
 	},
 }
 
@@ -24,7 +25,20 @@ pub struct MapEntity {
 	pub initial_position: Option<[f32; 3]>,
 	pub initial_rotation: Option<[f32; 3]>,
 	pub scale: Option<f32>,
+	pub player: Option<bool>,
 	pub camera: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum MapEntityPhysics {
+	Static,
+	Dynamic
+}
+
+impl Default for MapEntityPhysics {
+	fn default() -> Self {
+		MapEntityPhysics::Static
+	}
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,6 +60,9 @@ pub struct MapTemplate {
 	pub walk_speed: Option<f32>,
 	pub run_speed: Option<f32>,
 	pub collider: Option<MapEntityCollider>,
+	pub mass: Option<f32>,
+	pub physics: Option<MapEntityPhysics>,
+	pub automatic_collision_mesh: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -150,3 +167,4 @@ impl MapChanges {
 		}
 	}
 }
+

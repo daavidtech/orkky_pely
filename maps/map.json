@@ -8,6 +8,7 @@
 			"initial_rotation_y": 0,
 			"initial_transform": [0, 0, 0],
 			"walk_speed": 0.1,
+			"physics": "Dynamic",
 			"collider": {
 				"Cuboid": {
 					"x": 0.3,
@@ -18,7 +19,16 @@
 		},
 		{
 			"name": "Villager",
-			"asset": "narttu.glb"
+			"asset": "narttu.glb",
+			"physics": "Dynamic",
+			"collider": {
+				"Cuboid": {
+					"x": 0.3,
+					"y": 1,
+					"z": 0.3
+				}
+			},
+			"mass": 5
 		},
 		{
 			"name": "FPS_person",
@@ -32,16 +42,30 @@
 		{
 			"name": "Castle",
 			"asset": "castle.glb",
-			"collider": "AABB"
+			"collider": "AABB",
+			"automatic_collision_mesh": true
 		},
 		{
 			"name": "Box",
 			"asset": "box.glb",
-			"phycics": "Ragdoll"
+			"physics": "Dynamic"
 		},
 		{
 			"name": "Tree",
 			"asset": "tree.glb"
+		},
+		{
+			"name": "Troll",
+			"asset": "troll.glb",
+			"physics": "Dynamic",
+			"initial_transform": [0, -2.9, 0],
+			"collider": {
+				"Cuboid": {
+					"x": 1,
+					"y": 3,
+					"z": 1
+				}
+			}
 		}
 	],
 	"entities": [
@@ -74,6 +98,15 @@
 			"template": "Orc",
 			"initial_position": [-20, 2, 5],
 			"scale": 2 
+		},
+		{
+			"template": "Troll",
+			"initial_position": [10, 2, 10]
+		},
+		{
+			"template": "Villager",
+			"initial_position": [-20, 2, -5],
+			"scale": 2 
 		}
 	],
 	"lights": [
@@ -85,21 +118,21 @@
 			}
 		}	
 	],
+	"ambient_light": {
+		"color": "ffffff",
+		"brightness": 1.0
+	},
 	"shapes": [
 		{
 			"Box": {
-				"min_x": -40.0,
-				"max_x": 40.0,
+				"min_x": -100.0,
+				"max_x": 100.0,
 				"min_y": -0.25,
 				"max_y": 0.25,
-				"min_z": -40.0,
-				"max_z": 40.0,
+				"min_z": -100.0,
+				"max_z": 100.0,
 				"collider": true
 			}
 		}
-	],
-	"ambient_light": {
-		"color": "ffffff",
-		"brightness": 0.5
-	}
+	]
 }

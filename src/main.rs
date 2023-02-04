@@ -2,9 +2,9 @@ use std::sync::mpsc;
 
 use animations::{link_animation_players, AnimationStore, change_character_animation};
 use gltf::{UnloadedAssets, unpack_gltf};
-use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, gltf::{Gltf, GltfMesh}};
+use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, gltf::{Gltf, GltfMesh}, pbr::wireframe::{WireframePlugin, Wireframe}};
 use bevy_fps_controller::controller::{FpsControllerPlugin};
-use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, RigidBody,Collider, ComputedColliderShape}};
+use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, RigidBody,Collider, ComputedColliderShape}, render::RapierDebugRenderPlugin};
 use character::{Character};
 use map_changes::{handle_map_changes, handle_needs_template, give_assets};
 use map::MapChange;
@@ -48,6 +48,8 @@ fn main() {
 		}))
 		.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
 		.add_plugin(FpsControllerPlugin)
+		.add_plugin(WireframePlugin)
+		.add_plugin(RapierDebugRenderPlugin::default())
 		.add_startup_system(setup)
 		.add_startup_system(initial_grab_cursor)
 		.add_system(detect_animation_players)
@@ -62,6 +64,7 @@ fn main() {
 		.add_system(handle_needs_template)
 		.add_system(unpack_gltf)
 		.add_system(give_assets)
+		.add_system(add_collisions)
 		.run();
 }
 
@@ -131,6 +134,8 @@ fn add_collisions(
 	mut commands: Commands,
 ) {
 	for (entity, add_collider_mesh) in query.iter() {
+		log::info!("adding collision mesh for {:?}", entity);
+
 		// commands.entity(item).remove::<AddCollidingMesh>();
 		let pack = match assets_gltf.get(&add_collider_mesh.glft) {
 			Some(pack) => {
@@ -468,13 +473,14 @@ fn setup(
     // cube
     commands.spawn(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0 })),
-        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+        // material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
         transform: Transform::from_xyz(0.0, 0.5, 0.0),
         ..default()
     })
 	.insert(Collider::cuboid(4.0, 10.0, 4.0))
 	.insert(RigidBody::Fixed)
-	.insert(Transform::IDENTITY);
+	.insert(Transform::IDENTITY)
+	.insert(Wireframe);
     // light
     // commands.spawn(PointLightBundle {
     //     point_light: PointLight {
@@ -490,26 +496,26 @@ fn setup(
 	// 	color: Color::hex("E6EED6").unwrap(),
 	// });
 
-	commands.spawn_empty()
-	.insert(PbrBundle {
-		mesh: meshes.add(Mesh::from(shape::Box {
-			min_x: -20.0,
-			max_x: 20.0,
-			min_y: -0.25,
-			max_y: 0.25,
-			min_z: -20.0,
-			max_z: 20.0,
-		})),
-		material: materials.add(StandardMaterial {
-			base_color: Color::hex("E6EED6").unwrap(),
-			..default()
-		}),
-		transform: Transform::IDENTITY,
-		..default()
-	})
-	.insert(Collider::cuboid(20.0, 0.25, 20.0))
-	.insert(RigidBody::Fixed)
-	.insert(Transform::IDENTITY);
+	// commands.spawn_empty()
+	// .insert(PbrBundle {
+	// 	mesh: meshes.add(Mesh::from(shape::Box {
+	// 		min_x: -20.0,
+	// 		max_x: 20.0,
+	// 		min_y: -0.25,
+	// 		max_y: 0.25,
+	// 		min_z: -20.0,
+	// 		max_z: 20.0,
+	// 	})),
+	// 	material: materials.add(StandardMaterial {
+	// 		base_color: Color::hex("E6EED6").unwrap(),
+	// 		..default()
+	// 	}),
+	// 	transform: Transform::IDENTITY,
+	// 	..default()
+	// })
+	// .insert(Collider::cuboid(20.0, 0.25, 20.0))
+	// .insert(RigidBody::Fixed)
+	// .insert(Transform::IDENTITY);
 
 	// let castle_asset: Handle<Gltf> = asset_server.load("castle.glb");
 	// let castle_scene = asset_server.load("castle.glb#Scene0");
