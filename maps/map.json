@@ -28,6 +28,7 @@
 					"z": 0.3
 				}
 			},
+			"initial_transform": [0, -1.0, 0],
 			"mass": 5
 		},
 		{
@@ -48,7 +49,14 @@
 		{
 			"name": "Box",
 			"asset": "box.glb",
-			"physics": "Dynamic"
+			"physics": "Dynamic",
+			"collider": {
+				"Cuboid": {
+					"x": 1,
+					"y": 1,
+					"z": 1
+				}
+			}
 		},
 		{
 			"name": "Tree",
@@ -65,7 +73,8 @@
 					"y": 3,
 					"z": 1
 				}
-			}
+			},
+			"play_controllable": true
 		}
 	],
 	"entities": [
@@ -107,6 +116,16 @@
 			"template": "Villager",
 			"initial_position": [-20, 2, -5],
 			"scale": 2 
+		},
+		{
+			"template": "Box",
+			"initial_position": [0, 2, 0],
+			"scale": 2
+		},
+		{
+			"template": "Box",
+			"initial_position": [0, 2, 10],
+			"scale": 2
 		}
 	],
 	"lights": [

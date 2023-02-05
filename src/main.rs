@@ -2,7 +2,7 @@ use std::sync::mpsc;
 
 use animations::{link_animation_players, AnimationStore, change_character_animation};
 use gltf::{UnloadedAssets, unpack_gltf};
-use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, gltf::{Gltf, GltfMesh}, pbr::wireframe::{WireframePlugin, Wireframe}};
+use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, gltf::{Gltf, GltfMesh, GltfNode}, pbr::wireframe::{WireframePlugin, Wireframe}};
 use bevy_fps_controller::controller::{FpsControllerPlugin};
 use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, RigidBody,Collider, ComputedColliderShape}, render::RapierDebugRenderPlugin};
 use character::{Character};
@@ -129,6 +129,7 @@ fn main() {
 fn add_collisions(
 	assets_gltf: Res<Assets<Gltf>>,
 	assets_gltf_mesh: Res<Assets<GltfMesh>>,
+	assets_gltf_nodes: Res<Assets<GltfNode>>,
 	assets_mesh: Res<Assets<Mesh>>,
 	query: Query<(Entity, &AddCollidingMesh)>,
 	mut commands: Commands,
@@ -144,7 +145,21 @@ fn add_collisions(
 			None => continue,
 		};
 
-		for mesh in pack.meshes.iter() {
+		let mut entity_commands = commands.entity(entity);
+
+		for node in &pack.nodes {
+			let node = match assets_gltf_nodes.get(node) {
+				Some(n) => n,
+				None => continue,
+			};	
+
+			log::info!("found node {:?}", node.transform);
+
+			let mesh = match &node.mesh {
+				Some(mesh) => mesh,
+				None => continue,
+			};
+
 			let mesh = match assets_gltf_mesh.get(mesh) {
 				Some(m) => m,
 				None => continue,
@@ -161,9 +176,32 @@ fn add_collisions(
 					Some(collider) => {
 						log::info!("found collider {:?}", collider);
 
-						commands.entity(entity).with_children(|parent| {
-							parent.spawn(collider);
+						entity_commands.with_children(|parent| {
+							parent.spawn((
+								collider,
+								TransformBundle {
+									local: node.transform,
+									..Default::default()
+								}
+							));
 						});
+
+						
+
+						// entity_commands.push_children(&[child]);
+
+						// // commands.entity(entity).with_children(|parent| {
+						// // 	parent.spawn((
+						// // 		collider,
+						// // 		TransformBundle {
+						// // 			local: Transform {
+						// // 				scale: Vec3::splat(3.0),
+						// // 				..Default::default()
+						// // 			},
+						// // 			..Default::default()
+						// // 		}
+						// // 	));
+						// // });
 					},
 					None => {
 						log::info!("mesh collider is invalid");
@@ -171,6 +209,58 @@ fn add_collisions(
 				}
 			}
 		}
+
+		// for mesh in pack.meshes.iter() {
+		// 	let mesh = match assets_gltf_mesh.get(mesh) {
+		// 		Some(m) => m,
+		// 		None => continue,
+		// 	};
+
+		// 	log::info!("found mesh {:?}", mesh);
+
+		// 	for primite in &mesh.primitives {
+		// 		let mesh = assets_mesh.get(&primite.mesh).unwrap();
+
+		// 		let collider = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::TriMesh);
+
+		// 		match collider {
+		// 			Some(collider) => {
+		// 				log::info!("found collider {:?}", collider);
+
+		// 				let child = commands.spawn((
+		// 					collider,
+		// 					TransformBundle {
+		// 						local: Transform {
+		// 							scale: Vec3::splat(3.0),
+		// 							..Default::default()
+		// 						},
+		// 						..Default::default()
+		// 					}
+		// 				)).id();
+
+		// 				let mut entity_commands = commands.entity(entity);
+
+		// 				entity_commands.push_children(&[child]);
+
+		// 				// commands.entity(entity).with_children(|parent| {
+		// 				// 	parent.spawn((
+		// 				// 		collider,
+		// 				// 		TransformBundle {
+		// 				// 			local: Transform {
+		// 				// 				scale: Vec3::splat(3.0),
+		// 				// 				..Default::default()
+		// 				// 			},
+		// 				// 			..Default::default()
+		// 				// 		}
+		// 				// 	));
+		// 				// });
+		// 			},
+		// 			None => {
+		// 				log::info!("mesh collider is invalid");
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		commands.entity(entity).remove::<AddCollidingMesh>();
 	}
@@ -471,16 +561,16 @@ fn setup(
     //     ..default()
     // });
     // cube
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0 })),
-        // material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-        transform: Transform::from_xyz(0.0, 0.5, 0.0),
-        ..default()
-    })
-	.insert(Collider::cuboid(4.0, 10.0, 4.0))
-	.insert(RigidBody::Fixed)
-	.insert(Transform::IDENTITY)
-	.insert(Wireframe);
+    // commands.spawn(PbrBundle {
+    //     mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0 })),
+    //     // material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+    //     transform: Transform::from_xyz(0.0, 0.5, 0.0),
+    //     ..default()
+    // })
+	// .insert(Collider::cuboid(4.0, 10.0, 4.0))
+	// .insert(RigidBody::Fixed)
+	// .insert(Transform::IDENTITY)
+	// .insert(Wireframe);
     // light
     // commands.spawn(PointLightBundle {
     //     point_light: PointLight {
