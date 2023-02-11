@@ -5,3 +5,7 @@ use bevy::prelude::Component;
 pub struct Player {
 	
 }
+
+pub struct PlayerStore {
+	
+}

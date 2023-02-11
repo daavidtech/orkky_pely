@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Mutex;
 use std::sync::mpsc;
@@ -51,11 +52,30 @@ pub fn create_map_loader(path: &str) -> MapChangesReceiver {
 
 		let map = Map::load(&path);
 
-		if let Some(entities) = map.entities {
-			for entity in entities {
-				println!("new entity {}", entity.template);
+		if let Some(mut entities) = map.entities {
+			let mut used_ids = HashSet::new();
+
+			entities.iter().for_each(|e| {
+				if e.entity_id != "" {
+					used_ids.insert(e.entity_id.clone());
+				}
+			});
+			
+			for (index, entity) in entities.iter_mut().enumerate() {
+				println!("[{}] new entity {}", index, entity.template);
+
+				if entity.entity_id == "" {
+					loop {
+						let new_id = (index + 1).to_string();
+
+						if !used_ids.contains(&new_id) {
+							entity.entity_id = new_id;
+							break;
+						}
+					}
+				}
 	
-				tx.send(MapChange::NewMapEntity(entity));
+				tx.send(MapChange::NewMapEntity(entity.clone()));
 			}
 		}
 
@@ -88,6 +108,12 @@ pub fn create_map_loader(path: &str) -> MapChangesReceiver {
 
 			tx.send(MapChange::NewAmbientLight(ambient_light));
 		}
+
+		if let Some(camera_entity) = map.camera_entity {
+			println!("new camera entity {:?}", camera_entity);
+
+			tx.send(MapChange::NewCameraEntity(camera_entity));
+		}
 	});
 
 	MapChangesReceiver {
@@ -99,47 +125,3 @@ pub fn create_map_loader(path: &str) -> MapChangesReceiver {
 pub struct MapChangesReceiver {
 	pub rx: Mutex<mpsc::Receiver<MapChange>>
 }
-
-pub struct MapLoader {
-	watch_changes: bool,
-	path: String,
-	map_changes: MapChanges,
-	watcher: notify::RecommendedWatcher,
-	// last_map: Map
-}
-
-// impl MapLoader {
-// 	pub fn new(path: &str) -> MapLoader {
-// 		let watcher = worker(path);
-
-// 		let mut map_changes = MapChanges::new();
-
-// 		MapLoader {
-// 			watch_changes: false,
-// 			path: path.to_string(),
-// 			map_changes: map_changes,
-// 			watcher,
-// 			// last_map: Map::load(path)
-// 		}
-// 	}
-
-// 	pub fn load(&mut self) {
-// 		let map = Map::load(&self.path);
-
-// 		for entity in map.entities {
-// 			println!("new entity {}", entity.template);
-
-// 			self.map_changes.changes.push(MapChange::NewMapEntity(entity));
-// 		}
-
-// 		for template in map.templates {
-// 			println!("new template {}", template.name);
-
-// 			self.map_changes.changes.push(MapChange::NewMapTemplate(template));
-// 		}
-// 	}
-
-// 	pub fn get_map_changes(&self) -> MapChanges {
-// 		self.map_changes.clone()
-// 	}
-// }

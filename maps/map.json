@@ -3,19 +3,11 @@
 		{
 			"name": "Orc",
 			"asset": "orkki.glb",
-			"fps_camera_location": [0, 1.5, 0],
-			"third_person_camera_location": [0, 1.5, 0],
+			"fps_camera_location": [0, 1.5, -0.5],
+			"third_person_camera_location": [0, 2.5, 4],
 			"initial_rotation_y": 0,
 			"initial_transform": [0, 0, 0],
-			"walk_speed": 0.1,
-			"physics": "Dynamic",
-			"collider": {
-				"Cuboid": {
-					"x": 0.3,
-					"y": 1,
-					"z": 0.3
-				}
-			}
+			"walk_speed": 0.1
 		},
 		{
 			"name": "Villager",
@@ -32,19 +24,26 @@
 			"mass": 5
 		},
 		{
+			"name": "Crossbow",
+			"speed": 1,
+			"asset": "crossbow.glb",
+			"projectile": "Orc"
+		},
+		{
 			"name": "FPS_person",
 			"asset": "smg_fps_animations.glb",
 			"iddle_animiation": "Rig|KDW_DPose_Idle",
 			"walk_animation": "Rig|KDW_Walk",
 			"run_animation": "Rig|KDW_Run",
 			"reload_animation": "Rig|KDW_Reload_full",
-			"shoot_animation": "Rig|KDW_Shoot"
+			"shoot_animation": "Rig|KDW_Shoot",
+			"initial_transform": [0, -0.5, 0],
+			"initial_rotation_y": 180
 		},
 		{
 			"name": "Castle",
 			"asset": "castle.glb",
-			"collider": "AABB",
-			"automatic_collision_mesh": true
+			"collider": "AABB"
 		},
 		{
 			"name": "Box",
@@ -66,15 +65,16 @@
 			"name": "Troll",
 			"asset": "troll.glb",
 			"physics": "Dynamic",
-			"initial_transform": [0, -2.9, 0],
-			"collider": {
-				"Cuboid": {
-					"x": 1,
-					"y": 3,
-					"z": 1
+			"initial_transform": [0, -2, 0],
+			"initial_rotation_y": 180,
+			"third_person_camera_location": [0, 2.1, 10],
+			"play_controllable": true,
+			"weapons": [
+				{
+					"weapon_type": "Melee",
+					"animation": "Armature|mixamo.com|Layer0"
 				}
-			},
-			"play_controllable": true
+			]
 		}
 	],
 	"entities": [
@@ -101,21 +101,24 @@
 		{
 			"template": "Orc",
 			"initial_position": [-10, 2, 5],
-			"scale": 2 
+			"scale": 2
 		},
 		{
 			"template": "Orc",
 			"initial_position": [-20, 2, 5],
-			"scale": 2 
+			"scale": 2
 		},
 		{
 			"template": "Troll",
-			"initial_position": [10, 2, 10]
+			"initial_position": [10, 2, 10],
+			"scale": 3,
+			"camera": "third_person",
+			"player": true
 		},
 		{
 			"template": "Villager",
 			"initial_position": [-20, 2, -5],
-			"scale": 2 
+			"scale": 6
 		},
 		{
 			"template": "Box",
@@ -126,6 +129,10 @@
 			"template": "Box",
 			"initial_position": [0, 2, 10],
 			"scale": 2
+		},
+		{
+			"template": "FPS_person",
+			"initial_position": [0, 2, 0]
 		}
 	],
 	"lights": [

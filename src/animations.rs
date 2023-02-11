@@ -3,6 +3,9 @@ use bevy::utils::HashMap;
 
 use crate::character::Character;
 use crate::character::CurrentAnimation;
+use crate::types::AssetPacks;
+use crate::types::MapEntityId;
+use crate::types::StartAnimation;
 
 #[derive(Resource, Default)]
 pub struct AnimationStore {
@@ -224,5 +227,50 @@ pub fn change_character_animation(
 		// }
 
 		
+	}
+}
+
+pub fn handle_start_animation(
+	mut commands: Commands,
+	mut query: Query<(
+		Entity, 
+		&MapEntityId, 
+		&StartAnimation, 
+		&AnimationEntityLink
+	)>,
+	asset_packs: Res<AssetPacks>,
+	mut player_query: Query<&mut AnimationPlayer>,
+) {
+	for (entity, map_entity_id, start_animation, link) in query.iter_mut() {
+		let mut player = match player_query.get_mut(link.0) {
+			Ok(player) => player,
+			Err(_) => continue,
+		};
+
+		let asset_pack = match asset_packs.asset_packs.get(&start_animation.asset) {
+			Some(asset_pack) => asset_pack,
+			None => {
+				log::warn!("Asset pack {} not found", start_animation.asset);
+				continue;
+			}
+		};
+
+		if asset_pack.animations.len() > 0 {
+			let animation = asset_pack.animations.get(0).unwrap();
+			player.start(animation.clone()).repeat();
+		}
+
+		let mut entity_command = commands.entity(entity);
+
+		entity_command.remove::<StartAnimation>();
+
+		// match animation_store.get_animation(&start_animation.asset, &start_animation.animation) {
+		// 	Some(animation) => {
+		// 		player.start(animation.clone());
+		// 	},
+		// 	None => {
+		// 		log::warn!("Animation {} not found", start_animation.animation);
+		// 	}
+		// }
 	}
 }

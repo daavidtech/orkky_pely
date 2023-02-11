@@ -1,7 +1,7 @@
 use std::sync::mpsc;
 
-use animations::{link_animation_players, AnimationStore, change_character_animation};
-use gltf::{UnloadedAssets, unpack_gltf};
+use animations::{link_animation_players, AnimationStore, change_character_animation, handle_start_animation};
+use gltf::unpack_gltf;
 use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, gltf::{Gltf, GltfMesh, GltfNode}, pbr::wireframe::{WireframePlugin, Wireframe}};
 use bevy_fps_controller::controller::{FpsControllerPlugin};
 use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, RigidBody,Collider, ComputedColliderShape}, render::RapierDebugRenderPlugin};
@@ -9,13 +9,12 @@ use character::{Character};
 use map_changes::{handle_map_changes, handle_needs_template, give_assets};
 use map::MapChange;
 use map_loader::{MapChangesReceiver};
-use types::{You, MapTemplates, GltfRegister, AssetPacks};
+use types::{You, MapTemplates, GltfRegister, AssetPacks, PlayerIds};
 
 use crate::{spawn::Spawner, types::AddCollidingMesh};
 
 mod character;
 mod gltf;
-mod character_visuals;
 mod animations;
 mod npc;
 mod spawn;
@@ -36,11 +35,11 @@ fn main() {
 
     App::new()
 		.insert_resource(RapierConfiguration::default())
-		.insert_resource(UnloadedAssets::default())
 		.insert_resource(AnimationStore::default())
 		.insert_resource(MapTemplates::default())
 		.insert_resource(GltfRegister::default())
 		.insert_resource(AssetPacks::default())
+		.insert_resource(PlayerIds::default())
 		.insert_resource(changes_receiver)
     	.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,
@@ -50,12 +49,11 @@ fn main() {
 		.add_plugin(FpsControllerPlugin)
 		.add_plugin(WireframePlugin)
 		.add_plugin(RapierDebugRenderPlugin::default())
-		.add_startup_system(setup)
+		// .add_startup_system(setup)
 		.add_startup_system(initial_grab_cursor)
+		.add_system(handle_start_animation)
 		.add_system(detect_animation_players)
 		.add_system(detect_unique_characters)
-		.add_system(manage_assets)
-		.add_system(load_character_assets)
 		.add_system(link_animation_players)
 		.add_system(handle_your_keyboard_input)
 		.add_system(handle_your_mouse_input)
@@ -67,64 +65,6 @@ fn main() {
 		.add_system(add_collisions)
 		.run();
 }
-
-
-
-// fn handle_map_changes(
-// 	chnages_receiver: Res<MapChangesReceiver>,
-// 	mut map_templates: ResMut<MapTemplates>, 
-// 	mut done: Local<bool>,
-// ) {	
-// 	if *done {
-// 		return;
-// 	}
-
-// 	let chnages_receiver = chnages_receiver.rx.lock().unwrap();
-
-// 	let mut changes = vec![];
-
-// 	loop {
-// 		match chnages_receiver.try_recv() {
-// 			Ok(change) => {
-// 				log::info!("mapchange {:?}", change);
-
-// 				match change {
-// 					MapChange::NewMapEntity(entity) => {
-						
-// 					},
-//         			MapChange::NewMapTemplate(template) => {
-// 						map_templates.templates.insert(template.name.clone(), template);
-// 					},
-// 				}
-// 			},
-// 			Err(err) => {
-// 				match err {
-// 					mpsc::TryRecvError::Empty => {
-// 						break;
-// 					},
-// 					mpsc::TryRecvError::Disconnected => {
-// 						log::info!("changes disconnected");
-	
-// 						*done = true;
-	
-// 						return;
-// 					},
-// 				}
-// 			}
-// 		};
-// 	}
-	
-// 	for change in changes {
-// 		log::info!("change {:?}", change);
-
-// 		match change {
-// 			MapChange::NewMapEntity(entity) => {
-// 				log::info!("add entity {:?}", entity);
-// 			},
-// 			_ => {}
-// 		}
-// 	}
-// }
 
 fn add_collisions(
 	assets_gltf: Res<Assets<Gltf>>,
@@ -185,23 +125,6 @@ fn add_collisions(
 								}
 							));
 						});
-
-						
-
-						// entity_commands.push_children(&[child]);
-
-						// // commands.entity(entity).with_children(|parent| {
-						// // 	parent.spawn((
-						// // 		collider,
-						// // 		TransformBundle {
-						// // 			local: Transform {
-						// // 				scale: Vec3::splat(3.0),
-						// // 				..Default::default()
-						// // 			},
-						// // 			..Default::default()
-						// // 		}
-						// // 	));
-						// // });
 					},
 					None => {
 						log::info!("mesh collider is invalid");
@@ -209,58 +132,6 @@ fn add_collisions(
 				}
 			}
 		}
-
-		// for mesh in pack.meshes.iter() {
-		// 	let mesh = match assets_gltf_mesh.get(mesh) {
-		// 		Some(m) => m,
-		// 		None => continue,
-		// 	};
-
-		// 	log::info!("found mesh {:?}", mesh);
-
-		// 	for primite in &mesh.primitives {
-		// 		let mesh = assets_mesh.get(&primite.mesh).unwrap();
-
-		// 		let collider = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::TriMesh);
-
-		// 		match collider {
-		// 			Some(collider) => {
-		// 				log::info!("found collider {:?}", collider);
-
-		// 				let child = commands.spawn((
-		// 					collider,
-		// 					TransformBundle {
-		// 						local: Transform {
-		// 							scale: Vec3::splat(3.0),
-		// 							..Default::default()
-		// 						},
-		// 						..Default::default()
-		// 					}
-		// 				)).id();
-
-		// 				let mut entity_commands = commands.entity(entity);
-
-		// 				entity_commands.push_children(&[child]);
-
-		// 				// commands.entity(entity).with_children(|parent| {
-		// 				// 	parent.spawn((
-		// 				// 		collider,
-		// 				// 		TransformBundle {
-		// 				// 			local: Transform {
-		// 				// 				scale: Vec3::splat(3.0),
-		// 				// 				..Default::default()
-		// 				// 			},
-		// 				// 			..Default::default()
-		// 				// 		}
-		// 				// 	));
-		// 				// });
-		// 			},
-		// 			None => {
-		// 				log::info!("mesh collider is invalid");
-		// 			}
-		// 		}
-		// 	}
-		// }
 
 		commands.entity(entity).remove::<AddCollidingMesh>();
 	}
@@ -368,91 +239,6 @@ fn handle_your_mouse_input(
 	}
 }
 
-// fn handle_mouse(
-// 	buttons: Res<Input<MouseButton>>,
-// 	animation_store: Res<AnimationStore>,
-// 	mut player_query: Query<&mut AnimationPlayer>,
-// 	mut query: Query<(&Character, &AnimationEntityLink)>
-// ) {
-// 	let pressed = buttons.get_just_pressed();
-
-// 	for it in pressed {
-// 		match it {
-// 			MouseButton::Left => {
-// 				for (char, link) in query.iter_mut() {
-// 					if let Ok(mut player) = player_query.get_mut(link.0) {
-// 						match animation_store.0.get(format!("{}-{}", char.asset_name, char.shooting_animation).as_str()) {
-// 							Some(animation) => {
-// 								player.start(animation.clone()).repeat();
-// 							}
-// 							None => {
-// 								log::info!("No animation found for {}", char.shooting_animation);
-// 							}
-// 						}
-// 					}
-// 				}
-// 			},
-// 			MouseButton::Right => {
-// 				log::info!("Right mouse button pressed");
-// 			},
-// 			_ => {}
-// 		}
-// 	}
-// }
-
-// fn handle_keyboard(
-// 	input: Res<Input<KeyCode>>,
-// 	animation_store: Res<AnimationStore>,
-// 	mut player_query: Query<&mut AnimationPlayer>,
-// 	mut query: Query<(&Character, &AnimationEntityLink)>
-// 	// mut query: Query<(&mut AnimationPlayer, &Character), With<You>>
-// ) {
-// 	let pressed = input.get_just_pressed();
-
-// 	for it in pressed {
-// 		match it {
-// 			KeyCode::W | KeyCode::A | KeyCode::S | KeyCode::D => {
-// 				for (char, link) in query.iter_mut() {
-// 					if let Ok(mut player) = player_query.get_mut(link.0) {
-// 						match animation_store.0.get(format!("{}-{}", char.asset_name, char.walking_animation).as_str()) {
-// 							Some(animation) => {
-// 								player.start(animation.clone()).repeat();
-// 							}
-// 							None => {
-// 								log::info!("No animation found for {}", char.walking_animation);
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 			KeyCode::R => {
-// 				for (char, link) in query.iter_mut() {
-// 					if let Ok(mut player) = player_query.get_mut(link.0) {
-// 						match animation_store.0.get(format!("{}-{}", char.asset_name, char.reload_animation).as_str()) {
-// 							Some(animation) => {
-// 								player.start(animation.clone());
-// 							}
-// 							None => {
-// 								log::info!("No animation found for {}", char.reload_animation);
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 			_ => {}
-// 		}
-// 	}
-// }
-
-fn load_character_assets(
-	query: Query<&Character>,
-	asset_server: Res<AssetServer>
-) {
-	for character in query.iter() {
-		// let asset = asset_server.load(&character.asset);
-	}
-}
-
 fn toggle_grab_cursor(window: &mut Window) {
     match window.cursor_grab_mode() {
         CursorGrabMode::None => {
@@ -500,56 +286,42 @@ fn detect_unique_characters(
 	}
 }
 
-fn manage_assets(
-	mut unloaded_assets: ResMut<UnloadedAssets>,
-	mut animations: ResMut<AnimationStore>,
-	assets_gltf: Res<Assets<Gltf>>,
-) {
-	unloaded_assets.0.retain(|(name, p)| {
-		if let Some(gltf) = assets_gltf.get(&p) {			
-			log::info!("gltf loaded");
-
-			for (animation_name, clip) in gltf.named_animations.iter() {
-				log::info!("{} has animation {}", name, animation_name);	
-
-				animations.set_animation(name, animation_name, clip.clone());
-
-				// animations.0.insert(format!("{}-{}", name, animation_name), clip.clone());			
-			}
-
-			return false;
-		}
-
-		true
-	});
-}
-
-// fn check_asset(
-// 	mut commands: Commands,
-// 	my: Res<MyAssetPack>,
+// fn manage_assets(
+// 	mut unloaded_assets: ResMut<UnloadedAssets>,
+// 	mut animations: ResMut<AnimationStore>,
 // 	assets_gltf: Res<Assets<Gltf>>,
-// 	mut once: Local<bool>
 // ) {
-// 	if *once {
-// 		return;
-// 	}
+// 	unloaded_assets.0.retain(|(name, p)| {
+// 		if let Some(gltf) = assets_gltf.get(&p) {			
+// 			log::info!("gltf loaded");
 
-// 	if let Some(gltf) = assets_gltf.get(&my.0) {
-// 		log::info!("gltf loaded");
+// 			for (animation_name, clip) in gltf.named_animations.iter() {
+// 				log::info!("{} has animation {}", name, animation_name);	
 
-// 		for (name, clip) in gltf.named_animations.iter() {
-// 			log::info!("animation found {}", name);
+// 				animations.set_animation(name, animation_name, clip.clone());
+
+// 				// animations.0.insert(format!("{}-{}", name, animation_name), clip.clone());			
+// 			}
+
+// 			for (index, _) in gltf.animations.iter().enumerate() {
+// 				log::info!("found unnamed animation {}", index);
+// 			}
+
+// 			gltf.scenes.iter().enumerate().for_each(|(index,_)| {
+// 				log::info!("{} has scene {}", name, index);
+// 			});
+
+// 			return false;
 // 		}
 
-// 		*once = true;
-// 	}
+// 		true
+// 	});
 // }
 
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-	mut unloaded: ResMut<UnloadedAssets>,
 	asset_server: Res<AssetServer>
 ) {
 	log::info!("startup setup");
@@ -625,13 +397,13 @@ fn setup(
 	// 	// }
 	// ));
 
-	Spawner::new()
-		.set_you(true)
-		.set_asset("smg_fps_animations.glb")
-		.set_idle_animation("Rig|KDW_DPose_Idle")
-		.set_walking_animation("Rig|KDW_Walk")
-		.set_running_animation("Rig|KDW_Run")
-		.set_reload_animation("Rig|KDW_Reload_full")
-		.set_shooting_animation("Rig|KDW_Shot")
-		.spawn(commands, asset_server, unloaded);
+	// Spawner::new()
+	// 	.set_you(true)
+	// 	.set_asset("smg_fps_animations.glb")
+	// 	.set_idle_animation("Rig|KDW_DPose_Idle")
+	// 	.set_walking_animation("Rig|KDW_Walk")
+	// 	.set_running_animation("Rig|KDW_Run")
+	// 	.set_reload_animation("Rig|KDW_Reload_full")
+	// 	.set_shooting_animation("Rig|KDW_Shot")
+	// 	.spawn(commands, asset_server, unloaded);
 }

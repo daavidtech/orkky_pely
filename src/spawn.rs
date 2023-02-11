@@ -8,8 +8,6 @@ use bevy_fps_controller::controller::LogicalPlayer;
 use bevy_fps_controller::controller::RenderPlayer;
 use bevy_rapier3d::prelude::*;
 
-use crate::animations::AnimationEntityLink;
-use crate::gltf::UnloadedAssets;
 use crate::character::Character;
 use crate::types::You;
 
@@ -99,16 +97,16 @@ impl Spawner {
 		&self, 
 		mut commands: Commands,
 		asset_server: Res<AssetServer>,
-		mut unloaded_assets: ResMut<UnloadedAssets>,
+		// mut unloaded_assets: ResMut<UnloadedAssets>,
 	) {
 		if let Some(asset) = &self.asset {
 			let scene_name = format!("{}", asset);
 
 			log::info!("loading {}", scene_name);
 
-			let assetpack = asset_server.load(scene_name);
+			// let assetpack = asset_server.load(scene_name);
 
-			unloaded_assets.0.push((asset.to_string(), assetpack));
+			// unloaded_assets.0.push((asset.to_string(), assetpack));
 		}
 		
 

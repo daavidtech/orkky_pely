@@ -20,7 +20,24 @@ pub enum MapEntityCollider {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum WeaponType {
+	Melee,
+	Ranged
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Weapon {
+	pub weapon_type: WeaponType,
+	pub animation: String,
+	pub damage: Option<f32>,
+	pub range: Option<f32>,
+	pub speed: Option<f32>
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MapEntity {
+	#[serde(default)]
+	pub entity_id: String,
 	pub template: String,
 	pub initial_position: Option<[f32; 3]>,
 	pub initial_rotation: Option<[f32; 3]>,
@@ -63,6 +80,7 @@ pub struct MapTemplate {
 	pub mass: Option<f32>,
 	pub physics: Option<MapEntityPhysics>,
 	pub automatic_collision_mesh: Option<bool>,
+	pub weapons: Option<Vec<Weapon>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -136,6 +154,7 @@ pub struct Map {
 	pub shapes: Option<Vec<MapShape>>,
 	pub lights: Option<Vec<MapLight>>,
 	pub ambient_light: Option<AmbientLight>,
+	pub camera_entity: Option<String>
 }
 
 impl Map {
@@ -152,7 +171,8 @@ pub enum MapChange {
 	NewMapTemplate(MapTemplate),
 	NewMapShape(MapShape),
 	NewLight(MapLight),
-	NewAmbientLight(AmbientLight)
+	NewAmbientLight(AmbientLight),
+	NewCameraEntity(String)
 }
 
 #[derive(Debug, Clone, Resource)]

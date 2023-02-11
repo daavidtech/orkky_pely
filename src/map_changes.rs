@@ -1,10 +1,13 @@
+use std::f32::consts::TAU;
 use std::sync::mpsc;
 
 use bevy::ecs::system::EntityCommands;
 use bevy::gltf::Gltf;
-use bevy::pbr::wireframe::Wireframe;
 use bevy::prelude::*;
+use bevy_fps_controller::controller::FpsController;
+use bevy_fps_controller::controller::FpsControllerInput;
 use bevy_fps_controller::controller::LogicalPlayer;
+use bevy_fps_controller::controller::RenderPlayer;
 use bevy_rapier3d::prelude::*;
 
 use crate::map::MapEntityPhysics;
@@ -18,23 +21,31 @@ use crate::map_loader::MapChangesReceiver;
 use crate::types::AddCollidingMesh;
 use crate::types::AssetPacks;
 use crate::types::GltfRegister;
+use crate::types::MapEntityId;
 use crate::types::MapTemplates;
 use crate::types::NeedsAsset;
 use crate::types::NeedsTemplate;
+use crate::types::PlayerIds;
+use crate::types::StartAnimation;
 use crate::types::UnloadedGltfAsset;
 
 fn handle_map_template(
-	commands: &mut EntityCommands,
+	entity_commands: &mut EntityCommands,
 	template: &MapTemplate,
-	entity: &MapEntity,
-	meshes: &mut ResMut<Assets<Mesh>>
+	entity: &MapEntity
 ) {
 	match &template.asset {
 		Some(asset) => {
-			commands.insert(NeedsAsset {
+			entity_commands.insert(NeedsAsset {
 				asset: asset.clone(),
 				add_colliding_mesh: template.automatic_collision_mesh.unwrap_or_default(),
-				initial_transform: template.initial_transform.clone()
+				initial_transform: template.initial_transform.clone(),
+				initial_rotation_y: template.initial_rotation_y.clone(),
+			});
+
+			entity_commands.insert(StartAnimation {
+				asset: asset.clone(),
+				animation: "idle".to_string(),
 			});
 		},
 		None => {}
@@ -42,7 +53,7 @@ fn handle_map_template(
 	
 	match &entity.camera {
 		Some(camera_type) => {
-			commands.with_children(|parent| {
+			entity_commands.with_children(|parent| {
 				let translation = if camera_type == "fps" {
 					if let Some(translation) = template.fps_camera_location {
 						Vec3::from_slice(&translation)
@@ -84,7 +95,7 @@ fn handle_map_template(
 				MapEntityCollider::Capsule { a, b, radius } => {
 					log::info!("spawning capsule collider: {:?} {:?} {:?}", a, b, radius);
 
-					commands.insert((
+					entity_commands.insert((
 						RigidBody::Dynamic,
 						Collider::capsule(Vec3::Y * *a, Vec3::Y * *b, *radius)
 					));
@@ -96,7 +107,7 @@ fn handle_map_template(
 					let half_y = *y / 2.0;
 					let half_z = *z / 2.0;
 
-					commands.insert((
+					entity_commands.insert((
 						Restitution::coefficient(0.0),
 						Collider::cuboid(*x, *y, *z)
 					));
@@ -131,10 +142,10 @@ fn handle_map_template(
 		Some(physics) => {
 			match physics {
 				MapEntityPhysics::Dynamic => {
-					commands.insert(RigidBody::Dynamic);
+					entity_commands.insert(RigidBody::Dynamic);
 				},
 				MapEntityPhysics::Static => {
-					commands.insert(RigidBody::Fixed);
+					entity_commands.insert(RigidBody::Fixed);
 				}
 			}
 		},
@@ -159,14 +170,26 @@ fn spaw_map_entity(
 	map_templates: &MapTemplates,
 	entity: &MapEntity,
 	meshes: &mut ResMut<Assets<Mesh>>,
+	player_ids: &mut ResMut<PlayerIds>,
 ) {
 	log::info!("Spawning map entity: {}", entity.template);
 
-	let mut new_component = commands.spawn(
+	let mut new_component = commands.spawn((
 		SpatialBundle {
 			..Default::default()
-		}
-	);
+		},
+		MapEntityId(entity.entity_id.clone())
+	));
+
+	// if let Some(true) = &entity.camera {
+	// 	new_component.with_children(|parent| {
+	// 		parent.spawn(
+	// 			Camera3dBundle {
+	// 				..Default::default()
+	// 			}
+	// 		);
+	// 	});
+	// }
 
 	let scale = match entity.scale {
 		Some(scale) => Vec3::splat(scale),
@@ -178,17 +201,17 @@ fn spaw_map_entity(
 		None => Vec3::default()
 	};
 
-	new_component.insert(
-		Transform {
-			scale: scale,
-			translation: translation,
-			..Default::default()
-		}
-	);
+	let entity_transform = Transform {
+		scale: scale,
+		translation: translation,
+		..Default::default()
+	};
+
+	new_component.insert(entity_transform.clone());
 
 	match map_templates.templates.get(&entity.template) {
 		Some(template) => {
-			handle_map_template(&mut new_component, template, entity, meshes);
+			handle_map_template(&mut new_component, template, entity);
 		},
 		None => {
 			new_component.insert(
@@ -201,9 +224,46 @@ fn spaw_map_entity(
 	}
 
 	if let Some(true) = entity.player {
+		let player_id = player_ids.provide_player_id(&entity.entity_id);
+
+		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
+
 		new_component.insert(
-			LogicalPlayer(0)
+			RenderPlayer(player_id)
 		);
+
+		commands.spawn((
+			Collider::capsule(Vec3::Y * 0.5, Vec3::Y * 1.5, 0.5),
+			LogicalPlayer(player_id),
+			FpsControllerInput {
+				pitch: -TAU / 12.0,
+				yaw: TAU * 5.0 / 8.0,
+				..default()
+			},
+			FpsController { ..default() },
+			ActiveEvents::COLLISION_EVENTS,
+			Velocity::zero(),
+			RigidBody::Dynamic,
+			Sleeping::disabled(),
+			LockedAxes::ROTATION_LOCKED,
+			AdditionalMassProperties::Mass(1.0),
+			GravityScale(0.0),
+			Ccd { enabled: true }, // Prevent clipping when going fast
+			// TransformBundle::from_transform(
+			// 	Transform { 
+			// 		translation: match entity.initial_position {
+			// 			Some(position) => Vec3::new(
+			// 				position[0], 
+			// 				position[1], 
+			// 				position[2]
+			// 			),
+			// 			None => Vec3::default()
+			// 		},
+			// 		..Default::default()
+			// 	}
+			// ),
+			TransformBundle::from_transform(entity_transform),
+		));
 	}
 }
 
@@ -218,7 +278,7 @@ pub fn handle_needs_template(
 			Some(template) => {
 				let mut entity_commands = commands.entity(entity);
 				
-				handle_map_template(&mut entity_commands, template, &needs_template.map_enitity, &mut meshes);
+				handle_map_template(&mut entity_commands, template, &needs_template.map_enitity);
 
 				entity_commands.remove::<NeedsTemplate>();
 			},
@@ -409,6 +469,7 @@ pub fn handle_map_changes(
 	asset_server: Res<AssetServer>,
 	mut meshes: ResMut<Assets<Mesh>>,
 	mut materials: ResMut<Assets<StandardMaterial>>,
+	mut player_ids: ResMut<PlayerIds>,
 ) {
 	if *done {
 		return;
@@ -423,7 +484,13 @@ pub fn handle_map_changes(
 
 				match change {
 					MapChange::NewMapEntity(entity) => {
-						spaw_map_entity(&mut commands, &map_templates, &entity, &mut meshes)
+						spaw_map_entity(
+							&mut commands, 
+							&map_templates, 
+							&entity, 
+							&mut meshes,
+							&mut player_ids
+						);
 					},
         			MapChange::NewMapTemplate(template) => {
 						match &template.asset {
@@ -454,6 +521,14 @@ pub fn handle_map_changes(
 							color: Color::hex(args.color).unwrap(),
 						});
 					},
+        			MapChange::NewCameraEntity(id) => {
+						// commands.spawn(
+						// 	Camera3dBundle {
+						// 		transform: Transform::from_xyz(0.0, 0.0, 0.0),
+						// 		..Default::default()
+						// 	}
+						// );
+					},					
 				}
 			},
 			Err(err) => {
@@ -474,20 +549,45 @@ pub fn handle_map_changes(
 	}
 }
 
+// pub fn assign_camera(
+// 	mut commands: Commands,
+// 	mut query: Query<(Entity, &CameraEntity)>,
+// ) {
+// 	for (entity, camera_entity) in query.iter_mut() {
+// 		if camera_entity.is_main {
+// 			commands.entity(entity).insert_bundle(
+// 				Camera3dBundle {
+// 					transform: Transform::from_xyz(0.0, 0.0, 0.0),
+// 					..Default::default()
+// 				}
+// 			);
+// 		}
+// 	}
+// }
+
 pub fn give_assets(
 	mut commands: Commands,
-	query: Query<(Entity, &NeedsAsset)>,
+	query: Query<(Entity, &MapEntityId, &NeedsAsset)>,
 	asset_packs: Res<AssetPacks>
 ) {
-	for (entity, needs_asset) in query.iter() {
+	for (entity, map_entity_id, needs_asset) in query.iter() {
 		match asset_packs.asset_packs.get(&needs_asset.asset) {
 			Some(asset_pack) => {
-				let scene = asset_pack.scenes.values().next().unwrap().clone();
+				log::info!("[{}] giving asset: {:?}", map_entity_id.0, needs_asset.asset);
 
 				let mut entity_commands = commands.entity(entity);
+				entity_commands.remove::<NeedsAsset>();
+
+				let scene = if asset_pack.scenes.len() > 0 {
+					asset_pack.scenes[0].clone()
+				} else {
+					log::info!("[{}] no scene found", map_entity_id.0);
+					
+					continue;
+				};	
 
 				if needs_asset.add_colliding_mesh {
-					log::info!("adding collision mesh for entity: {:?}", entity);
+					log::info!("[{}] adding collision mesh", map_entity_id.0);
 
 					entity_commands.insert(
 						AddCollidingMesh {
@@ -497,22 +597,32 @@ pub fn give_assets(
 				}
 
 				entity_commands.with_children(|parent| {
+					log::info!("[{}] assign scene", map_entity_id.0);
+
 					let mut bundle = SceneBundle {
 						scene: scene,
 						..Default::default()
 					};
 
 					if let Some(transform) = needs_asset.initial_transform {
+						log::info!("[{}] initial transform {:?}", map_entity_id.0, transform);
+
 						bundle.transform.translation = Vec3::new(transform[0], transform[1], transform[2]);
+					}
+
+					if let Some(rotation) = needs_asset.initial_rotation_y {
+						log::info!("[{}] initial rotation {:?}", map_entity_id.0, rotation);
+
+						bundle.transform.rotation = Quat::from_rotation_y(
+							rotation.to_radians()
+						);
 					}
 
 					parent.spawn(bundle);
 				});
-
-				entity_commands.remove::<NeedsAsset>();
 			},
 			None => {
-				log::info!("no asset {:?}", needs_asset.asset);
+				log::info!("[{}] no asset {:?}", map_entity_id.0, needs_asset.asset);
 			}
 		}
 	}
