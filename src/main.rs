@@ -1,37 +1,32 @@
-use std::sync::mpsc;
-
-use animations::{link_animation_players, AnimationStore, change_character_animation, handle_start_animation};
+use animations::{link_animation_players, AnimationStore, change_character_animation, handle_start_animation, handle_stop_animation};
+use collisions::{add_collisions, move_melee_hitbox};
 use gltf::unpack_gltf;
-use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, gltf::{Gltf, GltfMesh, GltfNode}, pbr::wireframe::{WireframePlugin, Wireframe}};
+use bevy::{prelude::*, log::LogPlugin, window::CursorGrabMode, utils::HashSet, gltf::{Gltf, GltfMesh, GltfNode}, pbr::wireframe::{WireframePlugin}};
 use bevy_fps_controller::controller::{FpsControllerPlugin};
-use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, RigidBody,Collider, ComputedColliderShape}, render::RapierDebugRenderPlugin};
+use bevy_rapier3d::{prelude::{RapierConfiguration, NoUserData, RapierPhysicsPlugin, Collider, ComputedColliderShape}, render::RapierDebugRenderPlugin};
 use character::{Character};
+use input_handling::{keyboard_handler, mouse_handlers};
+use keymap::Keymap;
 use map_changes::{handle_map_changes, handle_needs_template, give_assets};
-use map::MapChange;
-use map_loader::{MapChangesReceiver};
 use types::{You, MapTemplates, GltfRegister, AssetPacks, PlayerIds};
-
-use crate::{spawn::Spawner, types::AddCollidingMesh};
 
 mod character;
 mod gltf;
 mod animations;
 mod npc;
-mod spawn;
 mod types;
 mod player;
-mod inspector;
 mod map;
 mod map_loader;
 mod map_changes;
+mod collisions;
+mod keymap;
+mod input_handling;
 
 fn main() {
-	// let map_loader = MapLoader::new("./maps/map.json");
+	let keymap = Keymap::load("./config/keymap.json");
 
-	// let changes = map_loader.get_map_changes();
-
-	let changes_receiver = map_loader::create_map_loader("./maps/map.json");
-
+	let changes_receiver = map_loader::create_map_loader("./config/map.json");
 
     App::new()
 		.insert_resource(RapierConfiguration::default())
@@ -41,6 +36,7 @@ fn main() {
 		.insert_resource(AssetPacks::default())
 		.insert_resource(PlayerIds::default())
 		.insert_resource(changes_receiver)
+		.insert_resource(keymap)
     	.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,
 			..Default::default()
@@ -48,93 +44,23 @@ fn main() {
 		.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
 		.add_plugin(FpsControllerPlugin)
 		.add_plugin(WireframePlugin)
-		.add_plugin(RapierDebugRenderPlugin::default())
-		// .add_startup_system(setup)
+		// .add_plugin(RapierDebugRenderPlugin::default())
 		.add_startup_system(initial_grab_cursor)
 		.add_system(handle_start_animation)
+		.add_system(handle_stop_animation)
 		.add_system(detect_animation_players)
-		.add_system(detect_unique_characters)
 		.add_system(link_animation_players)
 		.add_system(handle_your_keyboard_input)
-		.add_system(handle_your_mouse_input)
 		.add_system(change_character_animation)
 		.add_system(handle_map_changes)
 		.add_system(handle_needs_template)
 		.add_system(unpack_gltf)
 		.add_system(give_assets)
 		.add_system(add_collisions)
+		.add_system(keyboard_handler)
+		.add_system(mouse_handlers)
+		.add_system(move_melee_hitbox)
 		.run();
-}
-
-fn add_collisions(
-	assets_gltf: Res<Assets<Gltf>>,
-	assets_gltf_mesh: Res<Assets<GltfMesh>>,
-	assets_gltf_nodes: Res<Assets<GltfNode>>,
-	assets_mesh: Res<Assets<Mesh>>,
-	query: Query<(Entity, &AddCollidingMesh)>,
-	mut commands: Commands,
-) {
-	for (entity, add_collider_mesh) in query.iter() {
-		log::info!("adding collision mesh for {:?}", entity);
-
-		// commands.entity(item).remove::<AddCollidingMesh>();
-		let pack = match assets_gltf.get(&add_collider_mesh.glft) {
-			Some(pack) => {
-				pack
-			},
-			None => continue,
-		};
-
-		let mut entity_commands = commands.entity(entity);
-
-		for node in &pack.nodes {
-			let node = match assets_gltf_nodes.get(node) {
-				Some(n) => n,
-				None => continue,
-			};	
-
-			log::info!("found node {:?}", node.transform);
-
-			let mesh = match &node.mesh {
-				Some(mesh) => mesh,
-				None => continue,
-			};
-
-			let mesh = match assets_gltf_mesh.get(mesh) {
-				Some(m) => m,
-				None => continue,
-			};
-
-			log::info!("found mesh {:?}", mesh);
-
-			for primite in &mesh.primitives {
-				let mesh = assets_mesh.get(&primite.mesh).unwrap();
-
-				let collider = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::TriMesh);
-
-				match collider {
-					Some(collider) => {
-						log::info!("found collider {:?}", collider);
-
-						entity_commands.with_children(|parent| {
-							parent.spawn((
-								collider,
-								TransformBundle {
-									local: node.transform,
-									..Default::default()
-								}
-							));
-						});
-					},
-					None => {
-						log::info!("mesh collider is invalid");
-					}
-				}
-			}
-		}
-
-		commands.entity(entity).remove::<AddCollidingMesh>();
-	}
 }
 
 fn handle_your_keyboard_input(
@@ -198,46 +124,50 @@ fn handle_your_keyboard_input(
 	}
 }
 
-fn handle_your_mouse_input(
-	mouse_input: Res<Input<MouseButton>>,
-	mut query: Query<(&mut Character, &You)>
-) {
-	let pressed = mouse_input.get_just_pressed();
+// fn handle_your_mouse_input(
+// 	mut commands: Commands,
+// 	mouse_input: Res<Input<MouseButton>>,
+// 	mut query: Query<(Entity, &You)>
+// ) {
+// 	let pressed = mouse_input.get_just_pressed();
 
-	for key in pressed {
-		match &key {
-			MouseButton::Left => {
-				for (mut char, _) in query.iter_mut() {
-					char.shooting = true;
-				}
-			},
-			MouseButton::Right => {
-				for (mut char, _) in query.iter_mut() {
-					char.aiming = true;
-				}
-			},
-			_ => {}
-		}
-	}
+// 	let (entity, _) = query.single();
+// 	let entity_commands = commands.entity(entity);
 
-	let released = mouse_input.get_just_released();
+// 	for key in pressed {
+// 		match &key {
+// 			MouseButton::Left => {
+// 				for (entity, _) in query.iter_mut() {
+// 					char.shooting = true;
+// 				}
+// 			},
+// 			MouseButton::Right => {
+// 				for (mut char, _) in query.iter_mut() {
+// 					char.aiming = true;
+// 				}
+// 			},
+// 			_ => {}
+// 		}
+// 	}
 
-	for key in released {
-		match &key {
-			MouseButton::Left => {
-				for (mut char, _) in query.iter_mut() {
-					char.shooting = false;
-				}
-			},
-			MouseButton::Right => {
-				for (mut char, _) in query.iter_mut() {
-					char.aiming = false;
-				}
-			},
-			_ => {}
-		}
-	}
-}
+// 	let released = mouse_input.get_just_released();
+
+// 	for key in released {
+// 		match &key {
+// 			MouseButton::Left => {
+// 				for (mut char, _) in query.iter_mut() {
+// 					char.shooting = false;
+// 				}
+// 			},
+// 			MouseButton::Right => {
+// 				for (mut char, _) in query.iter_mut() {
+// 					char.aiming = false;
+// 				}
+// 			},
+// 			_ => {}
+// 		}
+// 	}
+// }
 
 fn toggle_grab_cursor(window: &mut Window) {
     match window.cursor_grab_mode() {
@@ -271,139 +201,4 @@ fn detect_animation_players(
 			map.insert(entity);
 		}
 	}
-}
-
-fn detect_unique_characters(
-	mut map: Local<HashSet<Entity>>,
-	query: Query<(Entity, &Character)>
-) {
-	for (entity, _) in query.iter() {
-		if !map.contains(&entity) {
-			log::info!("new character found {:?}", entity);
-
-			map.insert(entity);
-		}
-	}
-}
-
-// fn manage_assets(
-// 	mut unloaded_assets: ResMut<UnloadedAssets>,
-// 	mut animations: ResMut<AnimationStore>,
-// 	assets_gltf: Res<Assets<Gltf>>,
-// ) {
-// 	unloaded_assets.0.retain(|(name, p)| {
-// 		if let Some(gltf) = assets_gltf.get(&p) {			
-// 			log::info!("gltf loaded");
-
-// 			for (animation_name, clip) in gltf.named_animations.iter() {
-// 				log::info!("{} has animation {}", name, animation_name);	
-
-// 				animations.set_animation(name, animation_name, clip.clone());
-
-// 				// animations.0.insert(format!("{}-{}", name, animation_name), clip.clone());			
-// 			}
-
-// 			for (index, _) in gltf.animations.iter().enumerate() {
-// 				log::info!("found unnamed animation {}", index);
-// 			}
-
-// 			gltf.scenes.iter().enumerate().for_each(|(index,_)| {
-// 				log::info!("{} has scene {}", name, index);
-// 			});
-
-// 			return false;
-// 		}
-
-// 		true
-// 	});
-// }
-
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-	asset_server: Res<AssetServer>
-) {
-	log::info!("startup setup");
-
-    // plane
-    // commands.spawn(PbrBundle {
-    //     mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
-    //     material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-    //     ..default()
-    // });
-    // cube
-    // commands.spawn(PbrBundle {
-    //     mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0 })),
-    //     // material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-    //     transform: Transform::from_xyz(0.0, 0.5, 0.0),
-    //     ..default()
-    // })
-	// .insert(Collider::cuboid(4.0, 10.0, 4.0))
-	// .insert(RigidBody::Fixed)
-	// .insert(Transform::IDENTITY)
-	// .insert(Wireframe);
-    // light
-    // commands.spawn(PointLightBundle {
-    //     point_light: PointLight {
-    //         intensity: 15000.0,
-    //         shadows_enabled: true,
-    //         ..default()
-    //     },
-    //     transform: Transform::from_xyz(4.0, 8.0, 4.0),
-    //     ..default()
-    // });
-	// commands.insert_resource(AmbientLight {
-	// 	brightness: 0.5,
-	// 	color: Color::hex("E6EED6").unwrap(),
-	// });
-
-	// commands.spawn_empty()
-	// .insert(PbrBundle {
-	// 	mesh: meshes.add(Mesh::from(shape::Box {
-	// 		min_x: -20.0,
-	// 		max_x: 20.0,
-	// 		min_y: -0.25,
-	// 		max_y: 0.25,
-	// 		min_z: -20.0,
-	// 		max_z: 20.0,
-	// 	})),
-	// 	material: materials.add(StandardMaterial {
-	// 		base_color: Color::hex("E6EED6").unwrap(),
-	// 		..default()
-	// 	}),
-	// 	transform: Transform::IDENTITY,
-	// 	..default()
-	// })
-	// .insert(Collider::cuboid(20.0, 0.25, 20.0))
-	// .insert(RigidBody::Fixed)
-	// .insert(Transform::IDENTITY);
-
-	// let castle_asset: Handle<Gltf> = asset_server.load("castle.glb");
-	// let castle_scene = asset_server.load("castle.glb#Scene0");
-
-	// commands.spawn((
-	// 	SceneBundle {
-	// 		scene: castle_scene,
-	// 		transform: Transform {
-	// 			translation: Vec3::new(0.0, 0.0, 0.0),
-	// 			scale: Vec3::splat(0.25),
-	// 			..Default::default()
-	// 		},
-	// 		..default()
-	// 	},
-	// 	// AddCollidingMesh {
-	// 	// 	glft: castle_asset,
-	// 	// }
-	// ));
-
-	// Spawner::new()
-	// 	.set_you(true)
-	// 	.set_asset("smg_fps_animations.glb")
-	// 	.set_idle_animation("Rig|KDW_DPose_Idle")
-	// 	.set_walking_animation("Rig|KDW_Walk")
-	// 	.set_running_animation("Rig|KDW_Run")
-	// 	.set_reload_animation("Rig|KDW_Reload_full")
-	// 	.set_shooting_animation("Rig|KDW_Shot")
-	// 	.spawn(commands, asset_server, unloaded);
 }

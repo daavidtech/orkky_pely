@@ -1,15 +1,16 @@
+use std::time::Duration;
+
 use bevy::gltf::Gltf;
 use bevy::prelude::*;
+use bevy::time::Stopwatch;
 use bevy::utils::HashMap;
 
 use crate::map::MapEntity;
 use crate::map::MapTemplate;
-
-
+use crate::map::Weapon;
 
 #[derive(Clone, Component)]
 pub struct You;
-
 
 #[derive(Clone, Component)]
 pub struct AddCollidingMesh {
@@ -30,16 +31,15 @@ pub struct NeedsAsset {
 	pub initial_rotation_y: Option<f32>,
 }
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Default)]
 pub struct StartAnimation {
 	pub asset: String,
 	pub animation: String,
+	pub repeat: bool,
 }
 
 #[derive(Clone, Component)]
-pub struct SetAnimation {
-	pub animation: String,
-}
+pub struct StopAnimation;
 
 #[derive(Clone, Resource, Default)]
 pub struct MapTemplates {
@@ -71,9 +71,17 @@ pub struct AssetPacks {
 	pub asset_packs: HashMap<String, AssetPack>
 }
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Default)]
 pub struct GameEntity {
-
+	pub entity_id: String,
+	pub current_weapon: usize,
+	pub weapons: Vec<Weapon>,
+	pub asset: Option<String>,
+	pub iddle_animation: Option<String>,
+	pub walk_animation: Option<String>,
+	pub run_animation: Option<String>,
+	pub reload_animation: Option<String>,
+	pub shoot_animation: Option<String>,
 }
 
 #[derive(Clone, Resource, Default)]
@@ -81,8 +89,8 @@ pub struct EntityStore {
 	pub entities: HashMap<String, GameEntity>
 }
 
-#[derive(Clone, Component)]
-pub struct MapEntityId(pub String);
+// #[derive(Clone, Component)]
+// pub struct MapEntityId(pub String);
 
 
 #[derive(Clone, Resource, Default)]
@@ -101,4 +109,20 @@ impl PlayerIds {
 
 		player_id
 	}
+}
+
+#[derive(Clone, Component)]
+pub struct StartAttack;
+
+#[derive(Clone, Component)]
+pub struct StopAttack;
+
+
+#[derive(Clone, Component)]
+pub struct MeleeHitbox {
+	pub delay: f32,
+	pub dur: f32,
+	pub radius: f32,
+	pub start_angle: f32,
+	pub end_angle: f32,
 }

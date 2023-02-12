@@ -7,7 +7,15 @@
 			"third_person_camera_location": [0, 2.5, 4],
 			"initial_rotation_y": 0,
 			"initial_transform": [0, 0, 0],
-			"walk_speed": 0.1
+			"walk_speed": 0.1,
+			"physics": "Dynamic",
+			"collider": {
+				"Cuboid": {
+					"x": 0.5,
+					"y": 1,
+					"z": 0.5
+				}
+			}
 		},
 		{
 			"name": "Villager",
@@ -64,15 +72,22 @@
 		{
 			"name": "Troll",
 			"asset": "troll.glb",
-			"physics": "Dynamic",
-			"initial_transform": [0, -2, 0],
+			"initial_transform": [0, -2.0, 0],
 			"initial_rotation_y": 180,
 			"third_person_camera_location": [0, 2.1, 10],
 			"play_controllable": true,
 			"weapons": [
 				{
 					"weapon_type": "Melee",
-					"animation": "Armature|mixamo.com|Layer0"
+					"animation": "Armature|mixamo.com|Layer0",
+					"hitbox": {
+						"box": {
+
+						},
+						"Rotating": {
+
+						}
+					}
 				}
 			]
 		}
@@ -110,8 +125,8 @@
 		},
 		{
 			"template": "Troll",
-			"initial_position": [10, 2, 10],
-			"scale": 3,
+			"initial_position": [10, 4, 10],
+			"scale": 1,
 			"camera": "third_person",
 			"player": true
 		},

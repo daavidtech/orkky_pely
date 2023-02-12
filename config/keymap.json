@@ -1,0 +1,17 @@
+{
+	"move_forward": "W",
+	"move_backward": "S",
+	"move_left": "A",
+	"move_right": "D",
+	"attack_1": "MouseLeft",
+	"weapon_special_function": "MouseRight",
+	"inventory_1": "Key1",
+	"inventory_2": "Key2",
+	"inventory_3": "Key3",
+	"inventory_4": "Key4",
+	"inventory_5": "Key5",
+	"jump": "Space",
+	"crouch": "Ctrl",
+	"run": "LShift",
+	"reload": "R"
+}

@@ -28,10 +28,11 @@ pub enum WeaponType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Weapon {
 	pub weapon_type: WeaponType,
-	pub animation: String,
+	pub animation: Option<String>,
 	pub damage: Option<f32>,
 	pub range: Option<f32>,
-	pub speed: Option<f32>
+	pub duration: Option<f32>,
+	pub ammo: Option<usize>
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -80,7 +81,8 @@ pub struct MapTemplate {
 	pub mass: Option<f32>,
 	pub physics: Option<MapEntityPhysics>,
 	pub automatic_collision_mesh: Option<bool>,
-	pub weapons: Option<Vec<Weapon>>,
+	#[serde(default)]
+	pub weapons: Vec<Weapon>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
