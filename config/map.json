@@ -126,9 +126,9 @@
 		{
 			"template": "Troll",
 			"initial_position": [10, 4, 10],
-			"scale": 1,
-			"camera": "third_person",
-			"player": true
+			"scale": 1
+			
+			
 		},
 		{
 			"template": "Villager",
