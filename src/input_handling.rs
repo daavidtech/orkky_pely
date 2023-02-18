@@ -1,7 +1,4 @@
-use std::time::Duration;
-
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::Collider;
 
 use crate::map::WeaponType;
 use crate::types::GameEntity;
@@ -11,8 +8,8 @@ use crate::types::StopAnimation;
 use crate::types::You;
 
 pub fn keyboard_handler(
-	keyboard_input: Res<Input<KeyCode>>,
-	query: Query<(&You)>,
+	keyboard_input_: Res<Input<KeyCode>>,
+	query_: Query<(&You)>,
 ) {
 	// match keyboard_input.get_pressed() {
 	// 	KeyCode::W => {

@@ -9,7 +9,9 @@ use bevy::prelude::*;
 use bevy::time::Stopwatch;
 use bevy::utils::HashMap;
 use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ColliderMassProperties;
 use bevy_rapier3d::prelude::ComputedColliderShape;
+use bevy_rapier3d::prelude::MassProperties;
 
 use crate::types::AddCollidingMesh;
 use crate::types::MeleeHitbox;
@@ -133,6 +135,7 @@ pub fn move_melee_hitbox(
 				parent.spawn(
 					(
 						Collider::cuboid(0.5, 0.5, hitbox.radius / 2.0),
+						ColliderMassProperties::Density(12.0),
 						TransformBundle::from_transform(
 							Transform {
 								translation: Vec3::new(0.0, 0.0, hitbox.radius / 2.0),

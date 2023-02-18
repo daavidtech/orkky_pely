@@ -43,8 +43,7 @@ pub struct MapEntity {
 	pub initial_position: Option<[f32; 3]>,
 	pub initial_rotation: Option<[f32; 3]>,
 	pub scale: Option<f32>,
-	pub player: Option<bool>,
-	pub camera: Option<String>,
+	pub player: Option<bool>
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -150,13 +149,25 @@ pub struct AmbientLight {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CameraType {
+	FPS,
+	ThirdPerson
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MapCamera {
+	pub camera_type: Option<CameraType>,
+	pub entity_id: String
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Map {
 	pub entities: Option<Vec<MapEntity>>,
 	pub templates: Option<Vec<MapTemplate>>,
 	pub shapes: Option<Vec<MapShape>>,
 	pub lights: Option<Vec<MapLight>>,
 	pub ambient_light: Option<AmbientLight>,
-	pub camera_entity: Option<String>
+	pub camera: Option<MapCamera>
 }
 
 impl Map {
@@ -174,7 +185,7 @@ pub enum MapChange {
 	NewMapShape(MapShape),
 	NewLight(MapLight),
 	NewAmbientLight(AmbientLight),
-	NewCameraEntity(String)
+	NewCamera(MapCamera)
 }
 
 #[derive(Debug, Clone, Resource)]

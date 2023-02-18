@@ -109,10 +109,10 @@ pub fn create_map_loader(path: &str) -> MapChangesReceiver {
 			tx.send(MapChange::NewAmbientLight(ambient_light));
 		}
 
-		if let Some(camera_entity) = map.camera_entity {
+		if let Some(camera_entity) = map.camera {
 			println!("new camera entity {:?}", camera_entity);
 
-			tx.send(MapChange::NewCameraEntity(camera_entity));
+			tx.send(MapChange::NewCamera(camera_entity));
 		}
 	});
 
