@@ -10,6 +10,7 @@ use bevy_fps_controller::controller::LogicalPlayer;
 use bevy_fps_controller::controller::RenderPlayer;
 use bevy_rapier3d::prelude::*;
 
+use crate::map::CameraType;
 use crate::map::MapEntityPhysics;
 use crate::map::MapLight;
 use crate::map::MapEntityCollider;
@@ -24,6 +25,7 @@ use crate::types::GameEntity;
 use crate::types::GltfRegister;
 use crate::types::MapTemplates;
 use crate::types::NeedsAsset;
+use crate::types::NeedsCamera;
 use crate::types::NeedsTemplate;
 use crate::types::PlayerIds;
 use crate::types::UnloadedGltfAsset;
@@ -61,39 +63,6 @@ fn handle_map_template(
 	game_entity.shoot_animation = template.shoot_animation.clone();
 
 	game_entity.weapons = template.weapons.clone();
-	
-	match &entity.camera {
-		Some(camera_type) => {
-			entity_commands.with_children(|parent| {
-				let translation = if camera_type == "fps" {
-					if let Some(translation) = template.fps_camera_location {
-						Vec3::from_slice(&translation)
-					} else {
-						Vec3::default()
-					}
-				} else if camera_type == "third_person" {
-					if let Some(translation) = template.third_person_camera_location {
-						Vec3::from(translation)
-					} else {
-						Vec3::default()
-					}
-				} else {
-					Vec3::default()
-				};
-
-				parent.spawn(
-					Camera3dBundle {
-						transform: Transform {
-							translation: translation,
-							..Default::default()
-						},
-						..Default::default()
-					}
-				);
-			});
-		},
-		_ => {}
-	}
 
 	// Collider::cuboid(hx, hy, hz)
 
@@ -163,8 +132,9 @@ fn spaw_map_entity(
 ) {
 	log::info!("Spawning map entity: {}", entity.template);
 
-	let mut game_entity = GameEntity {
+	let game_entity = GameEntity {
 		entity_id: entity.entity_id.clone(),
+		template: entity.template.clone(),
 		..Default::default()
 	};
 
@@ -465,13 +435,13 @@ pub fn handle_map_changes(
 							color: Color::hex(args.color).unwrap(),
 						});
 					},
-        			MapChange::NewCameraEntity(id) => {
-						// commands.spawn(
-						// 	Camera3dBundle {
-						// 		transform: Transform::from_xyz(0.0, 0.0, 0.0),
-						// 		..Default::default()
-						// 	}
-						// );
+        			MapChange::NewCamera(map_camera) => {
+						commands.spawn(
+							NeedsCamera {
+								entity_id: map_camera.entity_id,
+								camera_type: map_camera.camera_type
+							}
+						);
 					},					
 				}
 			},
@@ -490,6 +460,122 @@ pub fn handle_map_changes(
 				}
 			}
 		};
+	}
+}
+
+pub fn give_camera(
+	mut commands: Commands,
+	needs_camera: Query<(Entity, &NeedsCamera)>,
+	game_entities: Query<(Entity, &GameEntity)>,
+	map_templates: ResMut<MapTemplates>, 
+) {
+	for (needs_cam_entity, needs_camera) in needs_camera.iter() {
+		let (entity, game_entity) = match game_entities
+			.iter()
+			.find(|(_, game_entity)| {
+				game_entity.entity_id == needs_camera.entity_id
+			}) {
+			Some((entity, game_entity)) => {
+				(entity, game_entity)
+			},
+			None => {
+				log::error!("could not find game entity for camera");
+
+				continue;
+			}
+		};
+
+		let template = match map_templates.templates.get(&game_entity.template) {
+			Some(template) => {
+				template
+			},
+			None => {
+				log::error!("could not find template for camera entity");
+
+				continue;
+			}
+		};
+
+		log::info!("giving camera to {}", game_entity.entity_id);
+
+		{
+			let mut needs_camera_entity_commands = commands.entity(needs_cam_entity);
+			needs_camera_entity_commands.remove::<NeedsCamera>();
+		}
+
+		let mut entity_commands = commands.entity(entity);
+
+		// entity_commands.insert(
+		// 	Camera3dBundle {
+		// 		transform: Transform::from_xyz(0.0, 0.0, 0.0),
+		// 		..Default::default()
+		// 	}
+		// );
+
+		let translation = match needs_camera.camera_type {
+			Some(CameraType::FPS) => match template.fps_camera_location {
+				Some(translation) => {
+					Vec3::from_slice(&translation)
+				},
+				None => {
+					Vec3::default()
+				}
+			},
+			Some(CameraType::ThirdPerson) => match template.third_person_camera_location {
+				Some(translation) => {
+					Vec3::from_slice(&translation)
+				},
+				None => {
+					Vec3::default()
+				}
+			},
+			None => Vec3::default(),
+		};
+
+		entity_commands.with_children(|parent| {
+			parent.spawn(
+				Camera3dBundle {
+					transform: Transform {
+						translation: translation,
+						..Default::default()
+					},
+					..Default::default()
+				}
+			);
+		});
+
+		// match &entity.camera {
+		// 	Some(camera_type) => {
+		// 		entity_commands.with_children(|parent| {
+		// 			let translation = if camera_type == "fps" {
+		// 				if let Some(translation) = template.fps_camera_location {
+							
+		// 				} else {
+		// 					Vec3::default()
+		// 				}
+		// 			} else if camera_type == "third_person" {
+		// 				if let Some(translation) = template.third_person_camera_location {
+		// 					Vec3::from(translation)
+		// 				} else {
+		// 					Vec3::default()
+		// 				}
+		// 			} else {
+		// 				Vec3::default()
+		// 			};
+
+		// 			parent.spawn(
+		// 				Camera3dBundle {
+		// 					transform: Transform {
+		// 						translation: translation,
+		// 						..Default::default()
+		// 					},
+		// 					..Default::default()
+		// 				}
+		// 			);
+		// 		});
+		// 	},
+		// 	_ => {}
+		// }
 	}
 }
 

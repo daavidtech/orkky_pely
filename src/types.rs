@@ -5,6 +5,8 @@ use bevy::prelude::*;
 use bevy::time::Stopwatch;
 use bevy::utils::HashMap;
 
+use crate::map::CameraType;
+use crate::map::MapCamera;
 use crate::map::MapEntity;
 use crate::map::MapTemplate;
 use crate::map::Weapon;
@@ -74,6 +76,7 @@ pub struct AssetPacks {
 #[derive(Clone, Component, Default)]
 pub struct GameEntity {
 	pub entity_id: String,
+	pub template: String,
 	pub current_weapon: usize,
 	pub weapons: Vec<Weapon>,
 	pub asset: Option<String>,
@@ -125,4 +128,36 @@ pub struct MeleeHitbox {
 	pub radius: f32,
 	pub start_angle: f32,
 	pub end_angle: f32,
+}
+
+
+pub struct MoveToLocation {
+	
+}
+
+// Enum that will be used as a global state for the game
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+pub enum GameState {
+    Splash,
+    Menu,
+    Game,
+}
+
+
+// One of the two settings that can be set through the menu. It will be a resource in the app
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+pub enum DisplayQuality {
+    Low,
+    Medium,
+    High,
+}
+
+// One of the two settings that can be set through the menu. It will be a resource in the app
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+pub struct Volume(u32);
+
+#[derive(Clone, Component)]
+pub struct NeedsCamera {
+	pub entity_id: String,
+	pub camera_type: Option<CameraType>
 }
