@@ -21,12 +21,14 @@ use crate::map::MapTemplate;
 use crate::map_loader::MapChangesReceiver;
 use crate::types::AddCollidingMesh;
 use crate::types::AssetPacks;
+use crate::types::EntityScene;
 use crate::types::GameEntity;
 use crate::types::GltfRegister;
 use crate::types::MapTemplates;
 use crate::types::NeedsAsset;
 use crate::types::NeedsCamera;
 use crate::types::NeedsTemplate;
+use crate::types::PlayerCamera;
 use crate::types::PlayerIds;
 use crate::types::UnloadedGltfAsset;
 use crate::types::You;
@@ -177,29 +179,38 @@ fn spaw_map_entity(
 		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
 
 		new_component.insert((
-			RenderPlayer(player_id),
-			You
+			You,
+			KinematicCharacterController {
+
+				..Default::default()
+			},
+			Collider::ball(0.5)
 		));
 
-		commands.spawn((
-			Collider::capsule(Vec3::Y * 0.5, Vec3::Y * 1.5, 0.5),
-			LogicalPlayer(player_id),
-			FpsControllerInput {
-				pitch: -TAU / 12.0,
-				yaw: TAU * 5.0 / 8.0,
-				..default()
-			},
-			FpsController { ..default() },
-			ActiveEvents::COLLISION_EVENTS,
-			Velocity::zero(),
-			RigidBody::Dynamic,
-			Sleeping::disabled(),
-			// LockedAxes::ROTATION_LOCKED,
-			AdditionalMassProperties::Mass(1.0),
-			GravityScale(0.0),
-			Ccd { enabled: true }, // Prevent clipping when going fast
-			TransformBundle::from_transform(entity_transform),
-		));
+		// new_component.insert((
+		// 	RenderPlayer(player_id),
+		// 	You
+		// ));
+
+		// commands.spawn((
+		// 	Collider::capsule(Vec3::Y * 0.5, Vec3::Y * 1.5, 0.5),
+		// 	LogicalPlayer(player_id),
+		// 	FpsControllerInput {
+		// 		pitch: -TAU / 12.0,
+		// 		yaw: TAU * 5.0 / 8.0,
+		// 		..default()
+		// 	},
+		// 	FpsController { ..default() },
+		// 	ActiveEvents::COLLISION_EVENTS,
+		// 	Velocity::zero(),
+		// 	RigidBody::Dynamic,
+		// 	Sleeping::disabled(),
+		// 	// LockedAxes::ROTATION_LOCKED,
+		// 	AdditionalMassProperties::Mass(1.0),
+		// 	GravityScale(0.0),
+		// 	Ccd { enabled: true }, // Prevent clipping when going fast
+		// 	TransformBundle::from_transform(entity_transform),
+		// ));
 	}
 }
 
@@ -505,13 +516,6 @@ pub fn give_camera(
 
 		let mut entity_commands = commands.entity(entity);
 
-		// entity_commands.insert(
-		// 	Camera3dBundle {
-		// 		transform: Transform::from_xyz(0.0, 0.0, 0.0),
-		// 		..Default::default()
-		// 	}
-		// );
-
 		let translation = match needs_camera.camera_type {
 			Some(CameraType::FPS) => match template.fps_camera_location {
 				Some(translation) => {
@@ -533,49 +537,23 @@ pub fn give_camera(
 		};
 
 		entity_commands.with_children(|parent| {
-			parent.spawn(
-				Camera3dBundle {
-					transform: Transform {
-						translation: translation,
+			let mut entity_commands = parent.spawn((
+				TransformBundle::default(),
+				PlayerCamera::default()
+			));
+
+			entity_commands.with_children(|parent| {
+				parent.spawn(
+					Camera3dBundle {
+						transform: Transform {
+							translation: translation,
+							..Default::default()
+						},
 						..Default::default()
-					},
-					..Default::default()
-				}
-			);
+					}
+				);
+			});
 		});
-
-		// match &entity.camera {
-		// 	Some(camera_type) => {
-		// 		entity_commands.with_children(|parent| {
-		// 			let translation = if camera_type == "fps" {
-		// 				if let Some(translation) = template.fps_camera_location {
-							
-		// 				} else {
-		// 					Vec3::default()
-		// 				}
-		// 			} else if camera_type == "third_person" {
-		// 				if let Some(translation) = template.third_person_camera_location {
-		// 					Vec3::from(translation)
-		// 				} else {
-		// 					Vec3::default()
-		// 				}
-		// 			} else {
-		// 				Vec3::default()
-		// 			};
-
-		// 			parent.spawn(
-		// 				Camera3dBundle {
-		// 					transform: Transform {
-		// 						translation: translation,
-		// 						..Default::default()
-		// 					},
-		// 					..Default::default()
-		// 				}
-		// 			);
-		// 		});
-		// 	},
-		// 	_ => {}
-		// }
 	}
 }
 
@@ -632,7 +610,10 @@ pub fn give_assets(
 						);
 					}
 
-					parent.spawn(bundle);
+					parent.spawn((
+						bundle,
+						EntityScene
+					));
 				});
 			},
 			None => {

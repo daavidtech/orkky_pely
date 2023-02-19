@@ -1,15 +1,8 @@
-use std::time::Duration;
-
 use bevy::gltf::Gltf;
-use bevy::prelude::*;
-use bevy::time::Stopwatch;
 use bevy::utils::HashMap;
 
-use crate::map::CameraType;
-use crate::map::MapCamera;
-use crate::map::MapEntity;
-use crate::map::MapTemplate;
-use crate::map::Weapon;
+use bevy::prelude::*;
+use crate::map::*;
 
 #[derive(Clone, Component)]
 pub struct You;
@@ -73,6 +66,14 @@ pub struct AssetPacks {
 	pub asset_packs: HashMap<String, AssetPack>
 }
 
+#[derive(Clone, Default)]
+pub struct MoveIntent {
+	pub move_forward: bool,
+	pub move_backward: bool,
+	pub move_leftward: bool,
+	pub move_rightward: bool,
+}
+
 #[derive(Clone, Component, Default)]
 pub struct GameEntity {
 	pub entity_id: String,
@@ -85,6 +86,8 @@ pub struct GameEntity {
 	pub run_animation: Option<String>,
 	pub reload_animation: Option<String>,
 	pub shoot_animation: Option<String>,
+	pub move_intent: MoveIntent,
+	pub look_at: Quat
 }
 
 #[derive(Clone, Resource, Default)]
@@ -161,3 +164,12 @@ pub struct NeedsCamera {
 	pub entity_id: String,
 	pub camera_type: Option<CameraType>
 }
+
+#[derive(Clone, Component, Default)]
+pub struct PlayerCamera {
+	pub yaw: f32,
+	pub pitch: f32,
+}
+
+#[derive(Clone, Component, Default)]
+pub struct EntityScene;

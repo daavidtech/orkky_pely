@@ -26,6 +26,7 @@ mod menu_plugin;
 mod game_plugin;
 mod despawn;
 mod cursor;
+mod player_control;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -42,7 +43,7 @@ fn main() {
 			..Default::default()
 		}))
 		.add_startup_system(initial_grab_cursor)
-		.add_state(GameState::Splash)
+		.add_state(GameState::Game)
         .add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)

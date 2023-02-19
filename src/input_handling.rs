@@ -8,18 +8,51 @@ use crate::types::StopAnimation;
 use crate::types::You;
 
 pub fn keyboard_handler(
-	keyboard_input_: Res<Input<KeyCode>>,
-	query_: Query<(&You)>,
+	keyboard_input: Res<Input<KeyCode>>,
+	mut game_entities: Query<&mut GameEntity, With<You>>,
 ) {
-	// match keyboard_input.get_pressed() {
-	// 	KeyCode::W => {
+	let mut game_entity = match game_entities.get_single_mut() {
+		Ok(game_entity) => game_entity,
+		Err(_) => {
+			return;
+		},
+	};
 
-	// 	}
-	// 	_ => {}
-	// }
-	// for _ in query.iter() {
-	// 	// do something
-	// }
+	for key in keyboard_input.get_just_pressed() {
+		match key {
+			KeyCode::W => {
+				game_entity.move_intent.move_forward = true;
+			},
+			KeyCode::A => {
+				game_entity.move_intent.move_leftward = true;
+			},
+			KeyCode::S => {
+				game_entity.move_intent.move_backward = true;
+			},
+			KeyCode::D => {
+				game_entity.move_intent.move_rightward = true;
+			},
+			_ => {}
+		}
+	}
+
+	for key in keyboard_input.get_just_released() {
+		match key {
+			KeyCode::W => {
+				game_entity.move_intent.move_forward = false;
+			},
+			KeyCode::A => {
+				game_entity.move_intent.move_leftward = false;
+			},
+			KeyCode::S => {
+				game_entity.move_intent.move_backward = false;
+			},
+			KeyCode::D => {
+				game_entity.move_intent.move_rightward = false;
+			},
+			_ => {}
+		}
+	}
 }
 
 
