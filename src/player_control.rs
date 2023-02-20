@@ -29,13 +29,14 @@ pub fn handle_mouse_input(
 	}
 }
 
-pub fn handle_move_intent(
+pub fn rotate_asset(
 	mut commands: Commands,
 	mut game_entities: Query<(Entity, &mut GameEntity)>,
 	mut set: ParamSet<(
 		Query<(&Parent, &EntityScene, &mut Transform)>,
 		Query<(&Parent, &PlayerCamera, &mut Transform)>
 	)>,
+	mut last_angle: Local<f32>,
 ) {
 	let entity_camera = {
 		match set.p1().get_single() {
@@ -63,7 +64,7 @@ pub fn handle_move_intent(
 			move_intent.move_backward || 
 			move_intent.move_leftward;
 
-		let rot = match (
+		let mut rot = match (
 			move_intent.move_forward, 
 			move_intent.move_rightward, 
 			move_intent.move_backward, 
@@ -93,24 +94,64 @@ pub fn handle_move_intent(
 			(true, false, false, false) => {
 				Quat::from_rotation_y(0.0_f32.to_radians())
 			},
-			_ => game_entity.look_at,
+			_ => {
+				game_entity.look_at
+			},
 		};	
-
-		game_entity.look_at = rot;	
 		
-		if let Some((camera_parent, camera_transform)) = entity_camera {
-			if parent.get() == camera_parent {
+		if moving {
+			if let Some((camera_parent, camera_transform)) = entity_camera {
+				if parent.get() == camera_parent {
+					let mut camera_rot = camera_transform.rotation;
 
+					camera_rot.x = 0.0;
+					camera_rot.z = 0.0;
 
-				camera_transform.rotation.to_euler(euler)
-
-				rot.rotate_y(camera_transform.rotation.y);
-				transform.rotation += Quat::from_rotation_y(camera_transform.rotation.y);
+					rot *= camera_rot;
+				}
 			}
 		}
 
+		game_entity.look_at = rot;
 		transform.rotation = rot;
 	}
 
 
+}
+
+pub fn move_asset(
+	mut query: Query<(&mut Transform, &GameEntity)>,
+) {
+	for (mut transform, game_entity) in query.iter_mut() {
+		let move_intent = &game_entity.move_intent;
+
+		let moving = move_intent.move_forward || 
+			move_intent.move_rightward || 
+			move_intent.move_backward || 
+			move_intent.move_leftward;
+
+		if moving {
+			let mut move_dir = Vec3::ZERO;
+
+			if move_intent.move_forward {
+				move_dir += Vec3::new(0.0, 0.0, 1.0);
+			}
+
+			if move_intent.move_rightward {
+				move_dir += Vec3::new(1.0, 0.0, 0.0);
+			}
+
+			if move_intent.move_backward {
+				move_dir += Vec3::new(0.0, 0.0, -1.0);
+			}
+
+			if move_intent.move_leftward {
+				move_dir += Vec3::new(-1.0, 0.0, 0.0);
+			}
+
+			move_dir = move_dir.normalize();
+
+			transform.translation += move_dir * 0.1;
+		}
+	}
 }

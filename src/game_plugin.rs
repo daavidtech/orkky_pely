@@ -18,7 +18,8 @@ use crate::map_changes::give_camera;
 use crate::map_changes::handle_map_changes;
 use crate::map_changes::handle_needs_template;
 use crate::player_control::handle_mouse_input;
-use crate::player_control::handle_move_intent;
+use crate::player_control::move_asset;
+use crate::player_control::rotate_asset;
 use crate::types::AssetPacks;
 use crate::types::GameState;
 use crate::types::GltfRegister;
@@ -58,7 +59,8 @@ impl Plugin for GamePlugin {
 					.with_system(mouse_handlers)
 					.with_system(move_melee_hitbox)
 					.with_system(handle_mouse_input)
-					.with_system(handle_move_intent)
+					.with_system(rotate_asset)
+					.with_system(move_asset)
 			)
 			.add_system_set(
 				SystemSet::on_exit(GameState::Game).with_system(despawn_screen::<OnGameScreen>),

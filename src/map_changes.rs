@@ -591,29 +591,33 @@ pub fn give_assets(
 				entity_commands.with_children(|parent| {
 					log::info!("[{}] assign scene", game_entity.entity_id);
 
-					let mut bundle = SceneBundle {
-						scene: scene,
-						..Default::default()
-					};
-
-					if let Some(transform) = needs_asset.initial_transform {
-						log::info!("[{}] initial transform {:?}", game_entity.entity_id, transform);
-
-						bundle.transform.translation = Vec3::new(transform[0], transform[1], transform[2]);
-					}
-
-					if let Some(rotation) = needs_asset.initial_rotation_y {
-						log::info!("[{}] initial rotation {:?}", game_entity.entity_id, rotation);
-
-						bundle.transform.rotation = Quat::from_rotation_y(
-							rotation.to_radians()
-						);
-					}
-
-					parent.spawn((
-						bundle,
-						EntityScene
+					let mut entity_commands = parent.spawn((
+						EntityScene,
+						SpatialBundle::default()
 					));
+
+					entity_commands.with_children(|parent| {
+						let mut bundle = SceneBundle {
+							scene: scene,
+							..Default::default()
+						};
+	
+						if let Some(transform) = needs_asset.initial_transform {
+							log::info!("[{}] initial transform {:?}", game_entity.entity_id, transform);
+	
+							bundle.transform.translation = Vec3::new(transform[0], transform[1], transform[2]);
+						}
+	
+						if let Some(rotation) = needs_asset.initial_rotation_y {
+							log::info!("[{}] initial rotation {:?}", game_entity.entity_id, rotation);
+	
+							bundle.transform.rotation = Quat::from_rotation_y(
+								rotation.to_radians()
+							);
+						}
+
+						parent.spawn(bundle);
+					});
 				});
 			},
 			None => {
