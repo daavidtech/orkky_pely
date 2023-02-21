@@ -10,6 +10,7 @@ use menu_plugin::MenuPlugin;
 use splash_plugin::SplashPlugin;
 use types::GameState;
 
+mod game_ui_plugin;
 mod gltf;
 mod animations;
 mod npc;
