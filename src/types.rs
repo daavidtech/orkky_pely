@@ -85,6 +85,8 @@ pub struct GameEntity {
 	pub run_animation: Option<String>,
 	pub reload_animation: Option<String>,
 	pub shoot_animation: Option<String>,
+	pub max_health: f32,
+	pub curr_health: f32,
 }
 
 #[derive(Clone, Resource, Default)]
@@ -161,3 +163,10 @@ pub struct NeedsCamera {
 	pub entity_id: String,
 	pub camera_type: Option<CameraType>
 }
+
+
+#[derive(Clone, Component)]
+pub struct LifeLost;
+
+#[derive(Clone, Component)]
+pub struct LifeLeft;

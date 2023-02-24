@@ -135,6 +135,7 @@ fn spaw_map_entity(
 	let game_entity = GameEntity {
 		entity_id: entity.entity_id.clone(),
 		template: entity.template.clone(),
+		curr_health: 500.0,
 		..Default::default()
 	};
 
