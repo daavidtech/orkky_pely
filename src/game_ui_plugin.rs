@@ -123,34 +123,33 @@ fn setupui(mut commands: Commands, asset_server: Res<AssetServer>,) {
 
 
 fn setup_health_ui(mut commands: Commands) {
+
+    commands.spawn(NodeBundle {
+        style: Style {
+            size: Size::new(Val::Px(2000.0), Val::Percent(15.0)),
+            position: UiRect {
+					
+                left: Val::Px(0.0),
+                top: Val::Px(620.0),
+                ..Default::default()
+            },
+            border: UiRect::all(Val::Px(20.0)),
+            ..Default::default()
+        },
+        background_color: Color::rgb(0.65, 0.65, 0.65).into(),
+        ..Default::default()
+    });
+	
+
 	commands.spawn((
 		NodeBundle {
 			style: Style {
-				size: Size::new(Val::Px(100.0), Val::Px(10.0)),
+				size: Size::new(Val::Px(500.0), Val::Px(20.0)),
 				position_type: PositionType::Absolute,
 				position: UiRect {
 					
-					left: Val::Px(580.0),
-					bottom: Val::Px(550.0),
-					..Default::default()
-				},
-				border: UiRect::all(Val::Px(20.0)),
-				..Default::default()
-			},
-			background_color: Color::GREEN.into(),
-			..Default::default()
-		},
-		LifeLeft
-	));
-	commands.spawn((
-		NodeBundle {
-			style: Style {
-				size: Size::new(Val::Px(100.0), Val::Px(10.0)),
-				position_type: PositionType::Absolute,
-				position: UiRect {
-					
-					left: Val::Px(680.0),
-					bottom: Val::Px(550.0),
+					left: Val::Px(400.0),
+					bottom: Val::Px(20.0),
 					..Default::default()
 				},
 				border: UiRect::all(Val::Px(20.0)),
@@ -161,6 +160,28 @@ fn setup_health_ui(mut commands: Commands) {
 		},
 		LifeLost
 	));
+
+
+    commands.spawn((
+		NodeBundle {
+			style: Style {
+				size: Size::new(Val::Px(0.0), Val::Px(20.0)),
+				position_type: PositionType::Absolute,
+				position: UiRect {
+					
+					left: Val::Px(400.0),
+					bottom: Val::Px(20.0),
+					..Default::default()
+				},
+				border: UiRect::all(Val::Px(20.0)),
+				..Default::default()
+			},
+			background_color: Color::GREEN.into(),
+			..Default::default()
+		},
+		LifeLeft
+	));
+
 
 
 }
@@ -177,6 +198,7 @@ fn update_health(
 		Some(x) => x,
 		None => return,
 	};
+    
 
 	style.size.width = Val::Px(game_entity.curr_health);
 }
