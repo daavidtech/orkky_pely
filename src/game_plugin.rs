@@ -1,5 +1,3 @@
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
-use bevy::diagnostic::LogDiagnosticsPlugin;
 use bevy::prelude::*;
 use bevy_fps_controller::controller::FpsControllerPlugin;
 use bevy_rapier3d::prelude::*;
@@ -35,8 +33,7 @@ impl Plugin for GamePlugin {
 			.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
 			.add_plugin(FpsControllerPlugin)
 			.add_plugin(RapierDebugRenderPlugin::default())
-			
-			.add_plugin(GameUiPlugin::default())		
+			.add_plugin(GameUiPlugin::default())
 			.insert_resource(RapierConfiguration::default())
 			.insert_resource(MapTemplates::default())
 			.insert_resource(GltfRegister::default())

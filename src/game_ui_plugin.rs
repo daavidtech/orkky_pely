@@ -1,40 +1,7 @@
 use bevy::diagnostic::Diagnostics;
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::diagnostic::LogDiagnosticsPlugin;
-use bevy::math::vec2;
-use bevy::prelude::App;
-use bevy::prelude::AssetServer;
-use bevy::prelude::Assets;
-use bevy::prelude::Camera2dBundle;
-use bevy::prelude::Color;
-use bevy::prelude::Commands;
-use bevy::prelude::Mesh;
-use bevy::prelude::NodeBundle;
-use bevy::prelude::Plugin;
-use bevy::prelude::Query;
-use bevy::prelude::Rect;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::SystemSet;
-use bevy::prelude::TextBundle;
-use bevy::prelude::Transform;
-use bevy::prelude::Vec2;
-use bevy::prelude::Vec3;
-use bevy::prelude::shape;
-use bevy::sprite;
-use bevy::sprite::ColorMaterial;
-use bevy::sprite::MaterialMesh2dBundle;
-use bevy::sprite::Sprite;
-use bevy::sprite::SpriteBundle;
-use bevy::text::Text;
-use bevy::text::TextSection;
-use bevy::text::TextStyle;
-use bevy::ui::PositionType;
-use bevy::ui::Size;
-use bevy::ui::Style;
-use bevy::ui::UiRect;
-use bevy::ui::Val;
-
+use bevy::prelude::*;
 use crate::types::GameEntity;
 use crate::types::GameState;
 use crate::types::LifeLeft;
@@ -126,11 +93,10 @@ fn setup_health_ui(mut commands: Commands) {
 
     commands.spawn(NodeBundle {
         style: Style {
-            size: Size::new(Val::Px(2000.0), Val::Percent(15.0)),
-            position: UiRect {
-					
-                left: Val::Px(0.0),
-                top: Val::Px(620.0),
+            size: Size::new(Val::Px(550.0), Val::Percent(15.0)),
+            position: UiRect {	
+                left: Val::Px(370.0),
+                top: Val::Px(660.0),
                 ..Default::default()
             },
             border: UiRect::all(Val::Px(20.0)),
@@ -198,15 +164,13 @@ fn update_health(
 		Some(x) => x,
 		None => return,
 	};
-    
+    let max_pixelwidth = 500.0;
+    let health = max_pixelwidth * (game_entity.curr_health / game_entity.max_health);
+    style.size.width = Val::Px(health);
 
-	style.size.width = Val::Px(game_entity.curr_health);
+
 }
 
-struct Health {
-    current: f32,
-    max: f32,
-}
 
 
 
