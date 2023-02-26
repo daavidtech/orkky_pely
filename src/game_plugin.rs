@@ -24,7 +24,9 @@ use crate::types::AssetPacks;
 use crate::types::GameState;
 use crate::types::GltfRegister;
 use crate::types::MapTemplates;
+use crate::types::MeleeHitbox;
 use crate::types::PlayerIds;
+use crate::types::RotateThing;
 
 pub struct GamePlugin;
 
@@ -61,6 +63,8 @@ impl Plugin for GamePlugin {
 					.with_system(handle_mouse_input)
 					.with_system(rotate_asset)
 					.with_system(move_asset)
+					.with_system(display_events)
+					.with_system(rotate)
 			)
 			.add_system_set(
 				SystemSet::on_exit(GameState::Game).with_system(despawn_screen::<OnGameScreen>),
@@ -82,5 +86,73 @@ pub fn setup(
 	}
 	for entity in &camera_3d {
 		commands.entity(entity).despawn_recursive();
+	}
+
+	commands.spawn((
+		Camera3dBundle::default(),
+	));
+}
+
+fn display_events(
+	mut commands: Commands,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut contact_force_events: EventReader<ContactForceEvent>,
+	query: Query<(Entity, &MeleeHitbox)>,
+	parents: Query<&Parent>,
+) {
+    for collision_event in collision_events.iter() {
+        // println!("Received collision event: {:?}", collision_event);
+		match collision_event {
+			CollisionEvent::Started(a, b, c) => {
+				let parent = match parents.get(a.clone()) {
+					Ok(p) => p,
+					Err(_) => continue,
+				};
+
+				let m = match query.get(parent.get()) {
+					Ok((_, m)) => m,
+					Err(_) => continue,
+				};
+
+				println!("Melee hitbox {:?} hit {:?}", m, b);
+			},
+			CollisionEvent::Stopped(_, _, _) => {},
+		}
+
+
+		match collision_event {
+			CollisionEvent::Started(a, b, c) => {
+				let parent = match parents.get(b.clone()) {
+					Ok(p) => p,
+					Err(_) => continue,
+				};
+
+				let m = match query.get(parent.get()) {
+					Ok((_, m)) => m,
+					Err(_) => continue,
+				};
+
+				println!("Melee hitbox {:?} hit {:?}", m, b);
+			},
+			CollisionEvent::Stopped(_, _, _) => {},
+		}
+    }
+
+    for contact_force_event in contact_force_events.iter() {
+        println!("Received contact force event: {:?}", contact_force_event);
+    }
+}
+
+
+pub fn rotate(
+	mut commands: Commands,
+	mut query: Query<(Entity, &RotateThing, &mut Transform)>
+) {
+	for (entity, rotate, mut transform) in query.iter_mut() {
+		transform.rotate_y(rotate.y.to_radians());
+
+		let mut entity_commands = commands.entity(entity);
+
+		entity_commands.remove::<RotateThing>();
 	}
 }

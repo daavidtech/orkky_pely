@@ -1,17 +1,10 @@
-use std::f32::consts::PI;
-use std::time::Duration;
-
 use bevy::gltf::Gltf;
 use bevy::gltf::GltfMesh;
 use bevy::gltf::GltfNode;
-use bevy::math;
 use bevy::prelude::*;
 use bevy::time::Stopwatch;
 use bevy::utils::HashMap;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ColliderMassProperties;
-use bevy_rapier3d::prelude::ComputedColliderShape;
-use bevy_rapier3d::prelude::MassProperties;
+use bevy_rapier3d::prelude::*;
 
 use crate::types::AddCollidingMesh;
 use crate::types::MeleeHitbox;
@@ -141,7 +134,8 @@ pub fn move_melee_hitbox(
 								translation: Vec3::new(0.0, 0.0, hitbox.radius / 2.0),
 								..Default::default()
 							},
-						)
+						),
+						ActiveEvents::COLLISION_EVENTS,
 					)
 				);
 			});

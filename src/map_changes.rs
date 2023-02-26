@@ -1,13 +1,8 @@
-use std::f32::consts::TAU;
 use std::sync::mpsc;
 
 use bevy::ecs::system::EntityCommands;
 use bevy::gltf::Gltf;
 use bevy::prelude::*;
-use bevy_fps_controller::controller::FpsController;
-use bevy_fps_controller::controller::FpsControllerInput;
-use bevy_fps_controller::controller::LogicalPlayer;
-use bevy_fps_controller::controller::RenderPlayer;
 use bevy_rapier3d::prelude::*;
 
 use crate::map::CameraType;
@@ -137,6 +132,7 @@ fn spaw_map_entity(
 	let game_entity = GameEntity {
 		entity_id: entity.entity_id.clone(),
 		template: entity.template.clone(),
+		// yaw: 180.0,
 		..Default::default()
 	};
 
@@ -148,30 +144,48 @@ fn spaw_map_entity(
 		// MapEntityId(entity.entity_id.clone())
 	));
 
-	let scale = match entity.scale {
-		Some(scale) => Vec3::splat(scale),
-		None => Vec3::splat(1.0)
-	};
+	new_component.with_children(|parent| {
+		let mut entity_components = parent.spawn((
+			SpatialBundle {
+				transform: Transform {
+					translation: Vec3::new(0.0, 0.0, -10.0),
+					..Default::default()
+				},
+				..Default::default()
+			}
+		));
 
-	let translation = match entity.initial_position {
-		Some(translation) => Vec3::from_slice(&translation),
-		None => Vec3::default()
-	};
+		entity_components.with_children(|parent| {
+			parent.spawn(
+				Collider::cuboid(1.0, 1.0, 7.0)
+			);
+		});		
+	});
 
-	let entity_transform = Transform {
-		scale: scale,
-		translation: translation,
-		..Default::default()
-	};
+	// let scale = match entity.scale {
+	// 	Some(scale) => Vec3::splat(scale),
+	// 	None => Vec3::splat(1.0)
+	// };
 
-	new_component.insert(entity_transform.clone());
+	// let translation = match entity.initial_position {
+	// 	Some(translation) => Vec3::from_slice(&translation),
+	// 	None => Vec3::default()
+	// };
 
-	new_component.insert(
-		NeedsTemplate {
-			template: entity.template.clone(),
-			map_enitity: entity.clone()
-		}
-	);
+	// let entity_transform = Transform {
+	// 	scale: scale,
+	// 	translation: translation,
+	// 	..Default::default()
+	// };
+
+	// new_component.insert(entity_transform.clone());
+
+	// new_component.insert(
+	// 	NeedsTemplate {
+	// 		template: entity.template.clone(),
+	// 		map_enitity: entity.clone()
+	// 	}
+	// );
 
 	if let Some(true) = entity.player {
 		let player_id = player_ids.provide_player_id(&entity.entity_id);
@@ -536,24 +550,40 @@ pub fn give_camera(
 			None => Vec3::default(),
 		};
 
-		entity_commands.with_children(|parent| {
-			let mut entity_commands = parent.spawn((
-				TransformBundle::default(),
-				PlayerCamera::default()
-			));
+		// entity_commands.with_children(|parent| {
+		// 	parent.spawn((
+		// 		Camera3dBundle {
+		// 			transform: Transform {
+		// 				translation: translation,
+		// 				..Default::default()
+		// 			},
+		// 			..Default::default()
+		// 		},
+		// 		PlayerCamera::default()
+		// 	));
 
-			entity_commands.with_children(|parent| {
-				parent.spawn(
-					Camera3dBundle {
-						transform: Transform {
-							translation: translation,
-							..Default::default()
-						},
-						..Default::default()
-					}
-				);
-			});
-		});
+		// 	// let mut entity_commands = parent.spawn((
+		// 	// 	TransformBundle::from_transform(
+		// 	// 		Transform { 
+		// 	// 			rotation: Quat::from_rotation_y(180.0_f32.to_radians()),
+		// 	// 			..Default::default()
+		// 	// 		}
+		// 	// 	),
+		// 	// 	PlayerCamera::default()
+		// 	// ));
+
+		// 	// entity_commands.with_children(|parent| {
+		// 	// 	parent.spawn(
+		// 	// 		Camera3dBundle {
+		// 	// 			transform: Transform {
+		// 	// 				translation: translation,
+		// 	// 				..Default::default()
+		// 	// 			},
+		// 	// 			..Default::default()
+		// 	// 		}
+		// 	// 	);
+		// 	// });
+		// });
 	}
 }
 

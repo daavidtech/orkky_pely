@@ -87,7 +87,8 @@ pub struct GameEntity {
 	pub reload_animation: Option<String>,
 	pub shoot_animation: Option<String>,
 	pub move_intent: MoveIntent,
-	pub look_at: Quat
+	pub yaw: f32,
+	// pub pitch: f32
 }
 
 #[derive(Clone, Resource, Default)]
@@ -124,7 +125,7 @@ pub struct StartAttack;
 pub struct StopAttack;
 
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Debug)]
 pub struct MeleeHitbox {
 	pub delay: f32,
 	pub dur: f32,
@@ -173,3 +174,8 @@ pub struct PlayerCamera {
 
 #[derive(Clone, Component, Default)]
 pub struct EntityScene;
+
+#[derive(Clone, Component, Default)]
+pub struct RotateThing {
+	pub y: f32,
+}

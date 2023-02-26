@@ -72,8 +72,8 @@
 		{
 			"name": "Troll",
 			"asset": "troll.glb",
-			"initial_transform": [0, -2.0, 0],
-			"initial_rotation_y": 180,
+			"initial_transform": [3, -2.0, 3],
+			"initial_rotation_y": 0,
 			"third_person_camera_location": [0, 2.1, 10],
 			"play_controllable": true,
 			"weapons": [
@@ -94,60 +94,11 @@
 	],
 	"entities": [
 		{
-			"template": "Castle",
-			"initial_position": [0, 0, 0],
-			"initial_rotation": [0, 0, 0]
-		},
-		{
-			"template": "Orc",
-			"initial_position": [20, 2, 5],
-			"scale": 2
-		},
-		{
-			"template": "Orc",
-			"initial_position": [10, 2, 5],
-			"scale": 2 
-		},
-		{
-			"template": "Orc",
-			"initial_position": [0, 2, 5],
-			"scale": 2 
-		},
-		{
-			"template": "Orc",
-			"initial_position": [-10, 2, 5],
-			"scale": 2
-		},
-		{
-			"template": "Orc",
-			"initial_position": [-20, 2, 5],
-			"scale": 2
-		},
-		{
 			"template": "Troll",
 			"entity_id": "troll",
-			"initial_position": [10, 4, 10],
+			"initial_position": [0, 2, 0],
 			"scale": 1,
 			"player": true
-		},
-		{
-			"template": "Villager",
-			"initial_position": [-20, 2, -5],
-			"scale": 6
-		},
-		{
-			"template": "Box",
-			"initial_position": [0, 2, 0],
-			"scale": 2
-		},
-		{
-			"template": "Box",
-			"initial_position": [0, 2, 10],
-			"scale": 2
-		},
-		{
-			"template": "FPS_person",
-			"initial_position": [0, 2, 0]
 		}
 	],
 	"lights": [
@@ -178,6 +129,6 @@
 	],
 	"camera": {
 		"entity_id": "troll",
-		"camera_type": "ThirdPerson"
+		"camera_type": "FPS"
 	}
 }
