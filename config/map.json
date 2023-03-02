@@ -102,7 +102,7 @@
 		{
 			"template": "Troll",
 			"entity_id": "troll",
-			"initial_position": [10, 4, 10],
+			"initial_position": [0, 2, 0],
 			"scale": 1,
 			"player": true
 		},
