@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_fps_controller::controller::FpsControllerPlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rapier3d::render::RapierDebugRenderPlugin;
 use game_ui_plugin::GameUiPlugin;
@@ -25,7 +24,6 @@ impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app
 			.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-			.add_plugin(FpsControllerPlugin)
 			.add_plugin(RapierDebugRenderPlugin::default())
 			.add_plugin(GameUiPlugin::default())
 			.insert_resource(RapierConfiguration::default())
