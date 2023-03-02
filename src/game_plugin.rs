@@ -13,20 +13,9 @@ use crate::despawn::despawn_screen;
 use crate::gltf::unpack_gltf;
 use crate::input_handling::keyboard_handler;
 use crate::input_handling::mouse_handlers;
-use crate::map_changes::give_assets;
-use crate::map_changes::give_camera;
-use crate::map_changes::handle_map_changes;
-use crate::map_changes::handle_needs_template;
-use crate::player_control::handle_mouse_input;
-use crate::player_control::move_asset;
-use crate::player_control::rotate_asset;
-use crate::types::AssetPacks;
-use crate::types::GameState;
-use crate::types::GltfRegister;
-use crate::types::MapTemplates;
-use crate::types::MeleeHitbox;
-use crate::types::PlayerIds;
-use crate::types::RotateThing;
+use crate::map_changes::*;
+use crate::player_control::*;
+use crate::types::*;
 
 pub struct GamePlugin;
 
@@ -61,10 +50,8 @@ impl Plugin for GamePlugin {
 					.with_system(mouse_handlers)
 					.with_system(move_melee_hitbox)
 					.with_system(handle_mouse_input)
-					.with_system(rotate_asset)
-					.with_system(move_asset)
+					.with_system(move_game_entity)
 					.with_system(display_events)
-					.with_system(rotate)
 			)
 			.add_system_set(
 				SystemSet::on_exit(GameState::Game).with_system(despawn_screen::<OnGameScreen>),
@@ -87,10 +74,6 @@ pub fn setup(
 	for entity in &camera_3d {
 		commands.entity(entity).despawn_recursive();
 	}
-
-	commands.spawn((
-		Camera3dBundle::default(),
-	));
 }
 
 fn display_events(
@@ -141,18 +124,4 @@ fn display_events(
     for contact_force_event in contact_force_events.iter() {
         println!("Received contact force event: {:?}", contact_force_event);
     }
-}
-
-
-pub fn rotate(
-	mut commands: Commands,
-	mut query: Query<(Entity, &RotateThing, &mut Transform)>
-) {
-	for (entity, rotate, mut transform) in query.iter_mut() {
-		transform.rotate_y(rotate.y.to_radians());
-
-		let mut entity_commands = commands.entity(entity);
-
-		entity_commands.remove::<RotateThing>();
-	}
 }

@@ -3,8 +3,6 @@ use bevy::prelude::*;
 use crate::map::WeaponType;
 use crate::types::GameEntity;
 use crate::types::MeleeHitbox;
-use crate::types::PlayerCamera;
-use crate::types::RotateThing;
 use crate::types::StartAnimation;
 use crate::types::StopAnimation;
 use crate::types::You;

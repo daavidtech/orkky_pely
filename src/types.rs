@@ -88,7 +88,7 @@ pub struct GameEntity {
 	pub shoot_animation: Option<String>,
 	pub move_intent: MoveIntent,
 	pub yaw: f32,
-	// pub pitch: f32
+	pub pitch: f32,
 }
 
 #[derive(Clone, Resource, Default)]
@@ -174,8 +174,3 @@ pub struct PlayerCamera {
 
 #[derive(Clone, Component, Default)]
 pub struct EntityScene;
-
-#[derive(Clone, Component, Default)]
-pub struct RotateThing {
-	pub y: f32,
-}

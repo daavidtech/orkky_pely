@@ -72,8 +72,8 @@
 		{
 			"name": "Troll",
 			"asset": "troll.glb",
-			"initial_transform": [3, -2.0, 3],
-			"initial_rotation_y": 0,
+			"initial_transform": [0, -2.0, 0],
+			"initial_rotation_y": 180,
 			"third_person_camera_location": [0, 2.1, 10],
 			"play_controllable": true,
 			"weapons": [
@@ -129,6 +129,6 @@
 	],
 	"camera": {
 		"entity_id": "troll",
-		"camera_type": "FPS"
+		"camera_type": "ThirdPerson"
 	}
 }

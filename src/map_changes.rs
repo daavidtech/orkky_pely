@@ -44,11 +44,6 @@ fn handle_map_template(
 				initial_transform: template.initial_transform.clone(),
 				initial_rotation_y: template.initial_rotation_y.clone(),
 			});
-
-			// entity_commands.insert(StartAnimation {
-			// 	asset: asset.clone(),
-			// 	animation: "idle".to_string(),
-			// });
 		},
 		None => {}
 	}
@@ -60,8 +55,6 @@ fn handle_map_template(
 	game_entity.shoot_animation = template.shoot_animation.clone();
 
 	game_entity.weapons = template.weapons.clone();
-
-	// Collider::cuboid(hx, hy, hz)
 
 	match &template.collider {
 		Some(collider) => {
@@ -109,17 +102,9 @@ fn handle_map_template(
 		None => {}
 	}
 
-	// if &template.automatic_collision_mesh {
-	// 	commands.insert(
-	// 		AddCollidingMesh {
-	// 			glft: template.asset.clone(),
-	// 		}
-	// 	);
-	// }
-
-	// if let Some(mass) = template.mass {
-	// 	commands.insert(AdditionalMassProperties::Mass(mass));
-	// }
+	if let Some(mass) = template.mass {
+		entity_commands.insert(AdditionalMassProperties::Mass(mass));
+	}
 }
 
 fn spaw_map_entity(
@@ -132,7 +117,6 @@ fn spaw_map_entity(
 	let game_entity = GameEntity {
 		entity_id: entity.entity_id.clone(),
 		template: entity.template.clone(),
-		// yaw: 180.0,
 		..Default::default()
 	};
 
@@ -141,51 +125,32 @@ fn spaw_map_entity(
 			..Default::default()
 		},
 		game_entity
-		// MapEntityId(entity.entity_id.clone())
 	));
 
-	new_component.with_children(|parent| {
-		let mut entity_components = parent.spawn((
-			SpatialBundle {
-				transform: Transform {
-					translation: Vec3::new(0.0, 0.0, -10.0),
-					..Default::default()
-				},
-				..Default::default()
-			}
-		));
+	let scale = match entity.scale {
+		Some(scale) => Vec3::splat(scale),
+		None => Vec3::splat(1.0)
+	};
 
-		entity_components.with_children(|parent| {
-			parent.spawn(
-				Collider::cuboid(1.0, 1.0, 7.0)
-			);
-		});		
-	});
+	let translation = match entity.initial_position {
+		Some(translation) => Vec3::from_slice(&translation),
+		None => Vec3::default()
+	};
 
-	// let scale = match entity.scale {
-	// 	Some(scale) => Vec3::splat(scale),
-	// 	None => Vec3::splat(1.0)
-	// };
+	let entity_transform = Transform {
+		scale: scale,
+		translation: translation,
+		..Default::default()
+	};
 
-	// let translation = match entity.initial_position {
-	// 	Some(translation) => Vec3::from_slice(&translation),
-	// 	None => Vec3::default()
-	// };
+	new_component.insert(entity_transform.clone());
 
-	// let entity_transform = Transform {
-	// 	scale: scale,
-	// 	translation: translation,
-	// 	..Default::default()
-	// };
-
-	// new_component.insert(entity_transform.clone());
-
-	// new_component.insert(
-	// 	NeedsTemplate {
-	// 		template: entity.template.clone(),
-	// 		map_enitity: entity.clone()
-	// 	}
-	// );
+	new_component.insert(
+		NeedsTemplate {
+			template: entity.template.clone(),
+			map_enitity: entity.clone()
+		}
+	);
 
 	if let Some(true) = entity.player {
 		let player_id = player_ids.provide_player_id(&entity.entity_id);
@@ -195,36 +160,13 @@ fn spaw_map_entity(
 		new_component.insert((
 			You,
 			KinematicCharacterController {
-
+				snap_to_ground: Some(
+					CharacterLength::Absolute(0.5)
+				),
 				..Default::default()
 			},
 			Collider::ball(0.5)
 		));
-
-		// new_component.insert((
-		// 	RenderPlayer(player_id),
-		// 	You
-		// ));
-
-		// commands.spawn((
-		// 	Collider::capsule(Vec3::Y * 0.5, Vec3::Y * 1.5, 0.5),
-		// 	LogicalPlayer(player_id),
-		// 	FpsControllerInput {
-		// 		pitch: -TAU / 12.0,
-		// 		yaw: TAU * 5.0 / 8.0,
-		// 		..default()
-		// 	},
-		// 	FpsController { ..default() },
-		// 	ActiveEvents::COLLISION_EVENTS,
-		// 	Velocity::zero(),
-		// 	RigidBody::Dynamic,
-		// 	Sleeping::disabled(),
-		// 	// LockedAxes::ROTATION_LOCKED,
-		// 	AdditionalMassProperties::Mass(1.0),
-		// 	GravityScale(0.0),
-		// 	Ccd { enabled: true }, // Prevent clipping when going fast
-		// 	TransformBundle::from_transform(entity_transform),
-		// ));
 	}
 }
 
@@ -254,16 +196,6 @@ fn spawn_light(
 	match light {
 		MapLight::Point(point) => {
 			log::info!("Spawning point light: {:?}", point);
-
-			// commands.spawn(PointLightBundle {
-			// 	point_light: PointLight {
-			// 		intensity: 15000.0,
-			// 		shadows_enabled: true,
-			// 		..default()
-			// 	},
-			// 	transform: Transform::from_xyz(4.0, 8.0, 4.0),
-			// 	..default()
-			// });
 
 			let mut light_bundle = PointLightBundle {
 				point_light: PointLight {
@@ -550,40 +482,28 @@ pub fn give_camera(
 			None => Vec3::default(),
 		};
 
-		// entity_commands.with_children(|parent| {
-		// 	parent.spawn((
-		// 		Camera3dBundle {
-		// 			transform: Transform {
-		// 				translation: translation,
-		// 				..Default::default()
-		// 			},
-		// 			..Default::default()
-		// 		},
-		// 		PlayerCamera::default()
-		// 	));
+		entity_commands.with_children(|parent| {
+			let mut entity_commands = parent.spawn((
+				TransformBundle::from_transform(
+					Transform {
+						..Default::default()
+					}
+				),
+				PlayerCamera::default()
+			));
 
-		// 	// let mut entity_commands = parent.spawn((
-		// 	// 	TransformBundle::from_transform(
-		// 	// 		Transform { 
-		// 	// 			rotation: Quat::from_rotation_y(180.0_f32.to_radians()),
-		// 	// 			..Default::default()
-		// 	// 		}
-		// 	// 	),
-		// 	// 	PlayerCamera::default()
-		// 	// ));
-
-		// 	// entity_commands.with_children(|parent| {
-		// 	// 	parent.spawn(
-		// 	// 		Camera3dBundle {
-		// 	// 			transform: Transform {
-		// 	// 				translation: translation,
-		// 	// 				..Default::default()
-		// 	// 			},
-		// 	// 			..Default::default()
-		// 	// 		}
-		// 	// 	);
-		// 	// });
-		// });
+			entity_commands.with_children(|parent| {
+				parent.spawn(
+					Camera3dBundle {
+						transform: Transform {
+							translation: translation,
+							..Default::default()
+						},
+						..Default::default()
+					}
+				);
+			});
+		});
 	}
 }
 
