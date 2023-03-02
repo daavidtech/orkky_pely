@@ -182,3 +182,9 @@ pub struct PlayerCamera {
 
 #[derive(Clone, Component, Default)]
 pub struct EntityScene;
+
+
+#[derive(Clone, Resource, Default)]
+pub struct NewMapChanges {
+	pub changes: Vec<MapChange>
+}

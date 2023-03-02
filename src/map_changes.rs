@@ -6,12 +6,14 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::map::CameraType;
+use crate::map::Light;
 use crate::map::MapEntityPhysics;
-use crate::map::MapLight;
+use crate::map::LightType;
 use crate::map::MapEntityCollider;
 use crate::map::MapChange;
 use crate::map::MapEntity;
 use crate::map::MapShape;
+use crate::map::MapShapeType;
 use crate::map::MapTemplate;
 use crate::map_loader::MapChangesReceiver;
 use crate::types::AddCollidingMesh;
@@ -191,10 +193,10 @@ pub fn handle_needs_template(
 
 fn spawn_light(
 	commands: &mut Commands,
-	light: MapLight
+	light: Light
 ) {
-	match light {
-		MapLight::Point(point) => {
+	match light.light_type {
+		LightType::Point(point) => {
 			log::info!("Spawning point light: {:?}", point);
 
 			let mut light_bundle = PointLightBundle {
@@ -238,8 +240,8 @@ fn spawn_shape(
 ) {
 	log::info!("spawning shape: {:?}", shape);
 
-	match shape {
-		MapShape::Cube(cube) => {
+	match shape.shape {
+		MapShapeType::Cube(cube) => {
 			commands.spawn(
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Cube { size: cube.size })),
@@ -247,7 +249,7 @@ fn spawn_shape(
 				}
 			);
 		},
-		MapShape::Plane(plane) => {
+		MapShapeType::Plane(plane) => {
 			log::info!("spawning plane {:?}", plane);
 			
 			let mut plane_bundle = PbrBundle {
@@ -271,7 +273,7 @@ fn spawn_shape(
 
 			commands.spawn(plane_bundle);
 		},
-		MapShape::Quad(quad) => {
+		MapShapeType::Quad(quad) => {
 			commands.spawn(
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Quad { 
@@ -282,7 +284,7 @@ fn spawn_shape(
 				}
 			);
 		},
-		MapShape::Circle(circle) => {
+		MapShapeType::Circle(circle) => {
 			commands.spawn(
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Circle {
@@ -297,7 +299,7 @@ fn spawn_shape(
 				}
 			);
 		},
-		MapShape::Box(box_shape) => {
+		MapShapeType::Box(box_shape) => {
 			let mut entity_commands = commands.spawn(
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Box {
@@ -335,7 +337,7 @@ fn spawn_shape(
 
 pub fn handle_map_changes(
 	mut commands: Commands,
-	chnages_receiver: Res<MapChangesReceiver>,
+	changes_receiver: Res<MapChangesReceiver>,
 	mut map_templates: ResMut<MapTemplates>, 
 	mut gltf_register: ResMut<GltfRegister>,
 	mut done: Local<bool>,
@@ -344,14 +346,14 @@ pub fn handle_map_changes(
 	mut materials: ResMut<Assets<StandardMaterial>>,
 	mut player_ids: ResMut<PlayerIds>,
 ) {
-	if *done {
-		return;
-	}
+	// if *done {
+	// 	return;
+	// }
 
-	let chnages_receiver = chnages_receiver.rx.lock().unwrap();
+	let changes_receiver = changes_receiver.rx.lock().unwrap();
 
 	loop {
-		match chnages_receiver.try_recv() {
+		match changes_receiver.try_recv() {
 			Ok(change) => {
 				log::info!("mapchange {:?}", change);
 
@@ -399,7 +401,19 @@ pub fn handle_map_changes(
 								camera_type: map_camera.camera_type
 							}
 						);
-					},					
+					},
+					MapChange::UpdateMapEntity(_) => {},
+					MapChange::RemoveMapEntity(_) => {},
+					MapChange::UpdateMaptemplate(_) => {},
+					MapChange::RemoveMapTemplate(_) => {},
+					MapChange::UpdateLight(_) => {},
+					MapChange::UpdateAmbientLight(_) => {},
+					MapChange::UpdateMapShape(_) => {},
+					MapChange::RemoveMapShape(_) => {},
+					MapChange::RemoveLight(_) => {},
+					MapChange::RemoveAmbientLight => {},
+					MapChange::UpdateCamera(_) => {},
+					MapChange::RemoveCamera => {},			
 				}
 			},
 			Err(err) => {

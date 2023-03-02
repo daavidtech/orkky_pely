@@ -28,7 +28,7 @@ pub fn handle_mouse_input(
 		let (mut transform, mut game_entity, _) = match q.get_single_mut() {
 			Ok(g) => g,
 			Err(_) => {
-				println!("no game entity found");
+				// println!("no game entity found");
 				return;
 			},
 		};
@@ -44,15 +44,15 @@ pub fn handle_mouse_input(
 			0.01
 		);
 
-		if *yaw_changed != game_entity.yaw {
-			log::info!("yaw: {}", game_entity.yaw);
-			*yaw_changed = game_entity.yaw;
-		}
+		// if *yaw_changed != game_entity.yaw {
+		// 	log::info!("yaw: {}", game_entity.yaw);
+		// 	*yaw_changed = game_entity.yaw;
+		// }
 
-		if *pitch_changed != game_entity.pitch {
-			log::info!("pitch: {}", game_entity.pitch);
-			*pitch_changed = game_entity.pitch;
-		}
+		// if *pitch_changed != game_entity.pitch {
+		// 	log::info!("pitch: {}", game_entity.pitch);
+		// 	*pitch_changed = game_entity.pitch;
+		// }
 
 		transform.rotation = Quat::from_rotation_y(2.0*PI - game_entity.yaw);
 
@@ -64,7 +64,7 @@ pub fn handle_mouse_input(
 		let (mut transform, _) = match q.get_single_mut() {
 			Ok(g) => g,
 			Err(_) => {
-				println!("no game entity found");
+				// println!("no game entity found");
 				return;
 			},
 		};
@@ -130,15 +130,15 @@ pub fn move_game_entity(
 				game_entity.yaw
 			);
 
-			if *last_x != x {
-				log::info!("x: {}", x);
-				*last_x = x;
-			}
+			// if *last_x != x {
+			// 	log::info!("x: {}", x);
+			// 	*last_x = x;
+			// }
 
-			if *last_y != y {
-				log::info!("y: {}", y);
-				*last_y = y;
-			}
+			// if *last_y != y {
+			// 	log::info!("y: {}", y);
+			// 	*last_y = y;
+			// }
 
 			transform.translation.x += x * 0.1;
 			transform.translation.z += y * 0.1;

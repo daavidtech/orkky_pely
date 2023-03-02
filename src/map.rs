@@ -2,7 +2,7 @@ use bevy::prelude::Resource;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 // #[serde(tag = "type")]
 pub enum MapEntityCollider {
 	AABB,
@@ -19,13 +19,13 @@ pub enum MapEntityCollider {
 	},
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum WeaponType {
 	Melee,
 	Ranged
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Weapon {
 	pub weapon_type: WeaponType,
 	pub animation: Option<String>,
@@ -35,7 +35,7 @@ pub struct Weapon {
 	pub ammo: Option<usize>
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct MapEntity {
 	#[serde(default)]
 	pub entity_id: String,
@@ -46,7 +46,7 @@ pub struct MapEntity {
 	pub player: Option<bool>
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MapEntityPhysics {
 	Static,
 	Dynamic
@@ -58,7 +58,7 @@ impl Default for MapEntityPhysics {
 	}
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MapTemplate {
 	pub name: String,
 	pub asset: Option<String>,
@@ -84,30 +84,30 @@ pub struct MapTemplate {
 	pub weapons: Vec<Weapon>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MapCube {
 	pub size: f32
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MapPlane {
 	pub size: f32,
 	pub material: Option<String>,
 	pub location: Option<[f32; 3]>
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MapQuad {
 	pub size: [f32; 2]
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MapCircle {
 	pub radius: f32,
 	pub vertices: Option<usize>
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MapBox {
 	pub min_x: f32,
 	pub max_x: f32,
@@ -118,8 +118,9 @@ pub struct MapBox {
 	pub collider: Option<bool>
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum MapShape {
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum MapShapeType {
 	Cube(MapCube),
 	Plane(MapPlane),
 	Quad(MapQuad),
@@ -127,7 +128,14 @@ pub enum MapShape {
 	Box(MapBox)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MapShape {
+	#[serde(default)]
+	pub id: String,
+	pub shape: MapShapeType
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PointMapLight {
 	pub color: String,
 	pub intensity: Option<f32>,
@@ -137,55 +145,76 @@ pub struct PointMapLight {
 	pub location: Option<[f32; 3]>
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum MapLight {
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum LightType {
 	Point(PointMapLight)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Light {
+	#[serde(default)]
+	pub id: String,
+	#[serde(rename = "type")]
+	pub light_type: LightType
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AmbientLight {
 	pub color: String,
 	pub brightness: f32
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CameraType {
 	FPS,
 	ThirdPerson
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MapCamera {
 	pub camera_type: Option<CameraType>,
 	pub entity_id: String
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Map {
 	pub entities: Option<Vec<MapEntity>>,
 	pub templates: Option<Vec<MapTemplate>>,
 	pub shapes: Option<Vec<MapShape>>,
-	pub lights: Option<Vec<MapLight>>,
+	pub lights: Option<Vec<Light>>,
 	pub ambient_light: Option<AmbientLight>,
 	pub camera: Option<MapCamera>
 }
 
 impl Map {
-	pub fn load(path: &str) -> Map {
-		let map = std::fs::read_to_string(path).unwrap();
-		let map: Map = serde_json::from_str(&map).unwrap();
-		map
+	pub fn load(path: &str) -> anyhow::Result<Map> {
+		let map = std::fs::read_to_string(path)?;
+		let map: Map = serde_json::from_str(&map)?;
+		Ok(map)
 	}
 }
 
 #[derive(Debug, Clone)]
 pub enum MapChange {
 	NewMapEntity(MapEntity),
+	UpdateMapEntity(MapEntity),
+	RemoveMapEntity(String),
 	NewMapTemplate(MapTemplate),
+	UpdateMaptemplate(MapTemplate),
+	RemoveMapTemplate(String),
 	NewMapShape(MapShape),
-	NewLight(MapLight),
+	UpdateMapShape(MapShape),
+	RemoveMapShape(String),
+	NewLight(Light),
+	UpdateLight(Light),
+	RemoveLight(String),
 	NewAmbientLight(AmbientLight),
-	NewCamera(MapCamera)
+	UpdateAmbientLight(AmbientLight),
+	RemoveAmbientLight,
+	NewCamera(MapCamera),
+	UpdateCamera(MapCamera),
+	RemoveCamera
 }
 
 #[derive(Debug, Clone, Resource)]

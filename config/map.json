@@ -74,7 +74,7 @@
 			"asset": "troll.glb",
 			"initial_transform": [0, -2.0, 0],
 			"initial_rotation_y": 180,
-			"third_person_camera_location": [0, 2.1, 10],
+			"third_person_camera_location": [0, 2.1, 14],
 			"play_controllable": true,
 			"weapons": [
 				{
@@ -111,16 +111,16 @@
 			"initial_position": [-20, 2, -5],
 			"scale": 2
 		}
-		
 	],
 	"lights": [
 		{
-			"Point": {
+			"type": {
+				"type": "Point",
 				"color": "ffffff",
 				"intensity": 100000,
 				"location": [0, 10, 0]
 			}
-		}	
+		}
 	],
 	"ambient_light": {
 		"color": "ffffff",
@@ -128,13 +128,14 @@
 	},
 	"shapes": [
 		{
-			"Box": {
+			"shape": {
+				"type": "Box",
 				"min_x": -100.0,
 				"max_x": 100.0,
 				"min_y": -0.25,
 				"max_y": 0.25,
 				"min_z": -100.0,
-				"max_z": 100.0,
+				"max_z": 101.0,
 				"collider": true
 			}
 		}
