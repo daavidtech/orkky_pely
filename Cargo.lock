@@ -2682,6 +2682,7 @@ checksum = "978aa494585d3ca4ad74929863093e87cac9790d81fe7aba2b3dc2890643a0fc"
 name = "orkky_pely"
 version = "0.1.0"
 dependencies = [
+ "approx",
  "bevy",
  "bevy-inspector-egui",
  "bevy_rapier3d",
