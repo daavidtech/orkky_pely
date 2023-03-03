@@ -30,6 +30,7 @@ mod despawn;
 mod cursor;
 mod player_control;
 mod math;
+mod console_plugin;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 

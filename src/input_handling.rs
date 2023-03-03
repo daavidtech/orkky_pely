@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::console_plugin::Console;
 use crate::map::WeaponType;
 use crate::types::GameEntity;
 use crate::types::MeleeHitbox;
@@ -225,9 +226,14 @@ pub fn keyboard_handler(
 
 pub fn mouse_handlers(
 	mut commands: Commands,
+	console: Res<Console>,
 	mouse_input: Res<Input<MouseButton>>,
 	query: Query<(Entity, &You, &GameEntity)>,
 ) {
+	if console.active {
+		return;
+	}
+
 	let pressed = mouse_input.get_just_pressed();
 
 	let (entity, game_entity) = match query.get_single() {

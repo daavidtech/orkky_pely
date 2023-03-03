@@ -9,6 +9,7 @@ use crate::animations::detect_animation_players;
 use crate::animations::link_animation_players;
 use crate::collisions::add_collisions;
 use crate::collisions::move_melee_hitbox;
+use crate::console_plugin::ConsolePlugin;
 use crate::despawn::despawn_screen;
 use crate::game_ui_plugin;
 use crate::gltf::unpack_gltf;
@@ -26,6 +27,7 @@ impl Plugin for GamePlugin {
 			.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
 			.add_plugin(RapierDebugRenderPlugin::default())
 			.add_plugin(GameUiPlugin::default())
+			.add_plugin(ConsolePlugin::default())
 			.insert_resource(RapierConfiguration::default())
 			.insert_resource(MapTemplates::default())
 			.insert_resource(GltfRegister::default())

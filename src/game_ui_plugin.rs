@@ -28,7 +28,7 @@ impl Plugin for GameUiPlugin {
 
         .add_system_set(
             SystemSet::on_update(GameState::Game)
-            .with_system(fps_display_system)
+            // .with_system(fps_display_system)
 			.with_system(update_health)
             
         );
@@ -38,15 +38,15 @@ impl Plugin for GameUiPlugin {
 }
 
 
-fn fps_display_system(diagnostics: Res<Diagnostics>, mut query: Query<&mut Text>) {
-    if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
-        if let Some(average) = fps.average() {
-            for mut text in query.iter_mut() {
-                text.sections[0].value = format!("FPS: {:.0}", average);
-            }
-        }
-    }
-}
+// fn fps_display_system(diagnostics: Res<Diagnostics>, mut query: Query<&mut Text>) {
+//     if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
+//         if let Some(average) = fps.average() {
+//             for mut text in query.iter_mut() {
+//                 text.sections[0].value = format!("FPS: {:.0}", average);
+//             }
+//         }
+//     }
+// }
 
 
 

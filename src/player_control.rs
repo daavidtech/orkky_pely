@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 
+use crate::console_plugin::Console;
 use crate::math::compute_new_angle;
 use crate::math::rotate_vec;
 use crate::types::GameEntity;
@@ -11,6 +12,7 @@ use crate::types::You;
 
 pub fn handle_mouse_input(
 	mut mouse_events: EventReader<MouseMotion>,
+	console: Res<Console>,
 	mut set: ParamSet<(
 		Query<(&mut Transform, &mut GameEntity, &You)>,
 		Query<(&mut Transform, &mut PlayerCamera)>
@@ -18,6 +20,10 @@ pub fn handle_mouse_input(
 	mut yaw_changed: Local<f32>,
 	mut pitch_changed: Local<f32>,
 ) {
+	if console.active {
+		return;
+	}
+
 	let mut mouse_delta = Vec2::ZERO;
 	for mouse_event in mouse_events.iter() {
 		mouse_delta += mouse_event.delta;
@@ -75,9 +81,14 @@ pub fn handle_mouse_input(
 
 pub fn move_game_entity(
 	mut query: Query<(&mut Transform, &GameEntity)>,
+	console: Res<Console>,
 	mut last_x: Local<f32>,
 	mut last_y: Local<f32>,
 ) {
+	if console.active {
+		return;
+	}
+
 	for (mut transform, game_entity) in query.iter_mut() {
 		let move_intent = &game_entity.move_intent;
 
