@@ -2,6 +2,7 @@
 use bevy::DefaultPlugins;
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
+use bevy_inspector_egui::WorldInspectorPlugin;
 use cursor::initial_grab_cursor;
 use game_plugin::GamePlugin;
 use keymap::Keymap;
@@ -38,15 +39,15 @@ fn main() {
     App::new()
 		.insert_resource(changes_receiver)
 		.insert_resource(keymap)
-    	.add_plugins(DefaultPlugins.set(LogPlugin {
+		.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,
 			..Default::default()
 		}))
 		.add_startup_system(initial_grab_cursor)
-		.add_state(GameState::Game)
-        .add_plugin(SplashPlugin)
+		.add_state(GameState::Game)	
+		.add_plugin(WorldInspectorPlugin::new())
+		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)
 		.run();
 }
-
