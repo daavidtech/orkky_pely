@@ -10,6 +10,7 @@ use map_loader::create_map_loader;
 use menu_plugin::MenuPlugin;
 use splash_plugin::SplashPlugin;
 use types::GameState;
+use types::TemplateEntities;
 
 mod game_ui_plugin;
 mod gltf;
@@ -30,6 +31,13 @@ mod despawn;
 mod cursor;
 mod player_control;
 mod math;
+mod action_queue;
+mod templates;
+mod camera;
+mod asset;
+mod shape;
+mod entity;
+mod light;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -39,7 +47,8 @@ fn main() {
 	let changes_receiver = create_map_loader("./config/map.json");
 
     App::new()
-		.insert_resource(changes_receiver)
+		.insert_resource(TemplateEntities::default())
+		.insert_resource( changes_receiver)
 		.insert_resource(keymap)
     	.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,

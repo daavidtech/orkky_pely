@@ -3,10 +3,13 @@ use bevy_rapier3d::prelude::*;
 use bevy_rapier3d::render::RapierDebugRenderPlugin;
 use game_ui_plugin::GameUiPlugin;
 
+use crate::action_queue::ActionQueuePlugin;
 use crate::animations::handle_start_animation;
 use crate::animations::handle_stop_animation;
 use crate::animations::detect_animation_players;
 use crate::animations::link_animation_players;
+use crate::asset::give_assets;
+use crate::camera::give_camera;
 use crate::collisions::add_collisions;
 use crate::collisions::move_melee_hitbox;
 use crate::despawn::despawn_screen;
@@ -16,6 +19,7 @@ use crate::input_handling::keyboard_handler;
 use crate::input_handling::mouse_handlers;
 use crate::map_changes::*;
 use crate::player_control::*;
+use crate::templates::handle_needs_template;
 use crate::types::*;
 
 pub struct GamePlugin;
@@ -24,6 +28,7 @@ impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app
 			.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+			.add_plugin(ActionQueuePlugin::default())
 			.add_plugin(RapierDebugRenderPlugin::default())
 			.add_plugin(GameUiPlugin::default())
 			.insert_resource(RapierConfiguration::default())

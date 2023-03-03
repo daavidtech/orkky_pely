@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use bevy::gltf::Gltf;
 use bevy::utils::HashMap;
 
@@ -183,8 +185,49 @@ pub struct PlayerCamera {
 #[derive(Clone, Component, Default)]
 pub struct EntityScene;
 
+#[derive(Clone, Component, Default)]
+pub struct EntityCamera {
+	pub game_entity_id: String
+}
 
 #[derive(Clone, Resource, Default)]
 pub struct NewMapChanges {
 	pub changes: Vec<MapChange>
+}
+
+#[derive(Clone, Resource, Default)]
+pub struct TemplateEntities {
+	pub entities: HashMap<String, Vec<String>>
+}
+
+impl TemplateEntities {
+	pub fn add_entity(&mut self, template: &str, entity_id: &str) {
+		if let Some(entities) = self.entities.get_mut(template) {
+			entities.push(entity_id.to_string());
+		} else {
+			self.entities.insert(template.to_string(), vec![entity_id.to_string()]);
+		}
+	}
+}
+
+#[derive(Clone, Resource, Default)]
+pub struct ActionQueue {
+	pub new_entities: Vec<MapEntity>,
+	pub update_entities: Vec<MapEntity>,
+	pub remove_entities: Vec<String>,
+	pub new_templates: Vec<MapTemplate>,
+	pub update_templates: Vec<MapTemplate>,
+	pub remove_templates: Vec<String>,
+	pub new_cameras: Vec<MapCamera>,
+	pub update_cameras: Vec<MapCamera>,
+	pub remove_cameras: Vec<String>,
+	pub new_shapes: Vec<MapShape>,
+	pub update_shapes: Vec<MapShape>,
+	pub remove_shapes: Vec<String>,
+}
+
+#[derive(Clone, Resource, Default)]
+pub struct CurrentCamera {
+	pub camera_type: Option<CameraType>,
+	pub entity_id: String
 }
