@@ -1,32 +1,31 @@
-use std::f32::consts::TAU;
 use std::sync::mpsc;
 
 use bevy::ecs::system::EntityCommands;
 use bevy::gltf::Gltf;
 use bevy::prelude::*;
-use bevy_fps_controller::controller::FpsController;
-use bevy_fps_controller::controller::FpsControllerInput;
-use bevy_fps_controller::controller::LogicalPlayer;
-use bevy_fps_controller::controller::RenderPlayer;
 use bevy_rapier3d::prelude::*;
 
 use crate::map::CameraType;
+use crate::map::Light;
 use crate::map::MapEntityPhysics;
-use crate::map::MapLight;
+use crate::map::LightType;
 use crate::map::MapEntityCollider;
 use crate::map::MapChange;
 use crate::map::MapEntity;
 use crate::map::MapShape;
+use crate::map::MapShapeType;
 use crate::map::MapTemplate;
 use crate::map_loader::MapChangesReceiver;
 use crate::types::AddCollidingMesh;
 use crate::types::AssetPacks;
+use crate::types::EntityScene;
 use crate::types::GameEntity;
 use crate::types::GltfRegister;
 use crate::types::MapTemplates;
 use crate::types::NeedsAsset;
 use crate::types::NeedsCamera;
 use crate::types::NeedsTemplate;
+use crate::types::PlayerCamera;
 use crate::types::PlayerIds;
 use crate::types::UnloadedGltfAsset;
 use crate::types::You;
@@ -47,11 +46,6 @@ fn handle_map_template(
 				initial_transform: template.initial_transform.clone(),
 				initial_rotation_y: template.initial_rotation_y.clone(),
 			});
-
-			// entity_commands.insert(StartAnimation {
-			// 	asset: asset.clone(),
-			// 	animation: "idle".to_string(),
-			// });
 		},
 		None => {}
 	}
@@ -63,8 +57,6 @@ fn handle_map_template(
 	game_entity.shoot_animation = template.shoot_animation.clone();
 
 	game_entity.weapons = template.weapons.clone();
-
-	// Collider::cuboid(hx, hy, hz)
 
 	match &template.collider {
 		Some(collider) => {
@@ -112,17 +104,9 @@ fn handle_map_template(
 		None => {}
 	}
 
-	// if &template.automatic_collision_mesh {
-	// 	commands.insert(
-	// 		AddCollidingMesh {
-	// 			glft: template.asset.clone(),
-	// 		}
-	// 	);
-	// }
-
-	// if let Some(mass) = template.mass {
-	// 	commands.insert(AdditionalMassProperties::Mass(mass));
-	// }
+	if let Some(mass) = template.mass {
+		entity_commands.insert(AdditionalMassProperties::Mass(mass));
+	}
 }
 
 fn spaw_map_entity(
@@ -143,7 +127,6 @@ fn spaw_map_entity(
 			..Default::default()
 		},
 		game_entity
-		// MapEntityId(entity.entity_id.clone())
 	));
 
 	let scale = match entity.scale {
@@ -177,28 +160,14 @@ fn spaw_map_entity(
 		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
 
 		new_component.insert((
-			RenderPlayer(player_id),
-			You
-		));
-
-		commands.spawn((
-			Collider::capsule(Vec3::Y * 0.5, Vec3::Y * 1.5, 0.5),
-			LogicalPlayer(player_id),
-			FpsControllerInput {
-				pitch: -TAU / 12.0,
-				yaw: TAU * 5.0 / 8.0,
-				..default()
+			You,
+			KinematicCharacterController {
+				snap_to_ground: Some(
+					CharacterLength::Absolute(0.5)
+				),
+				..Default::default()
 			},
-			FpsController { ..default() },
-			ActiveEvents::COLLISION_EVENTS,
-			Velocity::zero(),
-			RigidBody::Dynamic,
-			Sleeping::disabled(),
-			// LockedAxes::ROTATION_LOCKED,
-			AdditionalMassProperties::Mass(1.0),
-			GravityScale(0.0),
-			Ccd { enabled: true }, // Prevent clipping when going fast
-			TransformBundle::from_transform(entity_transform),
+			Collider::ball(0.5)
 		));
 	}
 }
@@ -224,21 +193,11 @@ pub fn handle_needs_template(
 
 fn spawn_light(
 	commands: &mut Commands,
-	light: MapLight
+	light: Light
 ) {
-	match light {
-		MapLight::Point(point) => {
+	match light.light_type {
+		LightType::Point(point) => {
 			log::info!("Spawning point light: {:?}", point);
-
-			// commands.spawn(PointLightBundle {
-			// 	point_light: PointLight {
-			// 		intensity: 15000.0,
-			// 		shadows_enabled: true,
-			// 		..default()
-			// 	},
-			// 	transform: Transform::from_xyz(4.0, 8.0, 4.0),
-			// 	..default()
-			// });
 
 			let mut light_bundle = PointLightBundle {
 				point_light: PointLight {
@@ -281,8 +240,8 @@ fn spawn_shape(
 ) {
 	log::info!("spawning shape: {:?}", shape);
 
-	match shape {
-		MapShape::Cube(cube) => {
+	match shape.shape {
+		MapShapeType::Cube(cube) => {
 			commands.spawn(
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Cube { size: cube.size })),
@@ -290,7 +249,7 @@ fn spawn_shape(
 				}
 			);
 		},
-		MapShape::Plane(plane) => {
+		MapShapeType::Plane(plane) => {
 			log::info!("spawning plane {:?}", plane);
 			
 			let mut plane_bundle = PbrBundle {
@@ -314,7 +273,7 @@ fn spawn_shape(
 
 			commands.spawn(plane_bundle);
 		},
-		MapShape::Quad(quad) => {
+		MapShapeType::Quad(quad) => {
 			commands.spawn(
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Quad { 
@@ -325,7 +284,7 @@ fn spawn_shape(
 				}
 			);
 		},
-		MapShape::Circle(circle) => {
+		MapShapeType::Circle(circle) => {
 			commands.spawn(
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Circle {
@@ -340,7 +299,7 @@ fn spawn_shape(
 				}
 			);
 		},
-		MapShape::Box(box_shape) => {
+		MapShapeType::Box(box_shape) => {
 			let mut entity_commands = commands.spawn(
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Box {
@@ -378,7 +337,7 @@ fn spawn_shape(
 
 pub fn handle_map_changes(
 	mut commands: Commands,
-	chnages_receiver: Res<MapChangesReceiver>,
+	changes_receiver: Res<MapChangesReceiver>,
 	mut map_templates: ResMut<MapTemplates>, 
 	mut gltf_register: ResMut<GltfRegister>,
 	mut done: Local<bool>,
@@ -387,14 +346,14 @@ pub fn handle_map_changes(
 	mut materials: ResMut<Assets<StandardMaterial>>,
 	mut player_ids: ResMut<PlayerIds>,
 ) {
-	if *done {
-		return;
-	}
+	// if *done {
+	// 	return;
+	// }
 
-	let chnages_receiver = chnages_receiver.rx.lock().unwrap();
+	let changes_receiver = changes_receiver.rx.lock().unwrap();
 
 	loop {
-		match chnages_receiver.try_recv() {
+		match changes_receiver.try_recv() {
 			Ok(change) => {
 				log::info!("mapchange {:?}", change);
 
@@ -442,7 +401,19 @@ pub fn handle_map_changes(
 								camera_type: map_camera.camera_type
 							}
 						);
-					},					
+					},
+					MapChange::UpdateMapEntity(_) => {},
+					MapChange::RemoveMapEntity(_) => {},
+					MapChange::UpdateMaptemplate(_) => {},
+					MapChange::RemoveMapTemplate(_) => {},
+					MapChange::UpdateLight(_) => {},
+					MapChange::UpdateAmbientLight(_) => {},
+					MapChange::UpdateMapShape(_) => {},
+					MapChange::RemoveMapShape(_) => {},
+					MapChange::RemoveLight(_) => {},
+					MapChange::RemoveAmbientLight => {},
+					MapChange::UpdateCamera(_) => {},
+					MapChange::RemoveCamera => {},			
 				}
 			},
 			Err(err) => {
@@ -505,13 +476,6 @@ pub fn give_camera(
 
 		let mut entity_commands = commands.entity(entity);
 
-		// entity_commands.insert(
-		// 	Camera3dBundle {
-		// 		transform: Transform::from_xyz(0.0, 0.0, 0.0),
-		// 		..Default::default()
-		// 	}
-		// );
-
 		let translation = match needs_camera.camera_type {
 			Some(CameraType::FPS) => match template.fps_camera_location {
 				Some(translation) => {
@@ -533,49 +497,27 @@ pub fn give_camera(
 		};
 
 		entity_commands.with_children(|parent| {
-			parent.spawn(
-				Camera3dBundle {
-					transform: Transform {
-						translation: translation,
+			let mut entity_commands = parent.spawn((
+				TransformBundle::from_transform(
+					Transform {
 						..Default::default()
-					},
-					..Default::default()
-				}
-			);
+					}
+				),
+				PlayerCamera::default()
+			));
+
+			entity_commands.with_children(|parent| {
+				parent.spawn(
+					Camera3dBundle {
+						transform: Transform {
+							translation: translation,
+							..Default::default()
+						},
+						..Default::default()
+					}
+				);
+			});
 		});
-
-		// match &entity.camera {
-		// 	Some(camera_type) => {
-		// 		entity_commands.with_children(|parent| {
-		// 			let translation = if camera_type == "fps" {
-		// 				if let Some(translation) = template.fps_camera_location {
-							
-		// 				} else {
-		// 					Vec3::default()
-		// 				}
-		// 			} else if camera_type == "third_person" {
-		// 				if let Some(translation) = template.third_person_camera_location {
-		// 					Vec3::from(translation)
-		// 				} else {
-		// 					Vec3::default()
-		// 				}
-		// 			} else {
-		// 				Vec3::default()
-		// 			};
-
-		// 			parent.spawn(
-		// 				Camera3dBundle {
-		// 					transform: Transform {
-		// 						translation: translation,
-		// 						..Default::default()
-		// 					},
-		// 					..Default::default()
-		// 				}
-		// 			);
-		// 		});
-		// 	},
-		// 	_ => {}
-		// }
 	}
 }
 
@@ -613,26 +555,33 @@ pub fn give_assets(
 				entity_commands.with_children(|parent| {
 					log::info!("[{}] assign scene", game_entity.entity_id);
 
-					let mut bundle = SceneBundle {
-						scene: scene,
-						..Default::default()
-					};
+					let mut entity_commands = parent.spawn((
+						EntityScene,
+						SpatialBundle::default()
+					));
 
-					if let Some(transform) = needs_asset.initial_transform {
-						log::info!("[{}] initial transform {:?}", game_entity.entity_id, transform);
+					entity_commands.with_children(|parent| {
+						let mut bundle = SceneBundle {
+							scene: scene,
+							..Default::default()
+						};
+	
+						if let Some(transform) = needs_asset.initial_transform {
+							log::info!("[{}] initial transform {:?}", game_entity.entity_id, transform);
+	
+							bundle.transform.translation = Vec3::new(transform[0], transform[1], transform[2]);
+						}
+	
+						if let Some(rotation) = needs_asset.initial_rotation_y {
+							log::info!("[{}] initial rotation {:?}", game_entity.entity_id, rotation);
+	
+							bundle.transform.rotation = Quat::from_rotation_y(
+								rotation.to_radians()
+							);
+						}
 
-						bundle.transform.translation = Vec3::new(transform[0], transform[1], transform[2]);
-					}
-
-					if let Some(rotation) = needs_asset.initial_rotation_y {
-						log::info!("[{}] initial rotation {:?}", game_entity.entity_id, rotation);
-
-						bundle.transform.rotation = Quat::from_rotation_y(
-							rotation.to_radians()
-						);
-					}
-
-					parent.spawn(bundle);
+						parent.spawn(bundle);
+					});
 				});
 			},
 			None => {

@@ -28,6 +28,9 @@ mod menu_plugin;
 mod game_plugin;
 mod despawn;
 mod cursor;
+mod player_control;
+mod math;
+mod console_plugin;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -49,5 +52,6 @@ fn main() {
 		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)
+		.add_plugin(WorldInspectorPlugin::new())
 		.run();
 }

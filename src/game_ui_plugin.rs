@@ -17,8 +17,7 @@ pub struct GameUiPlugin;
 
 impl Plugin for GameUiPlugin {
 	fn build(&self, app: &mut App) {app   
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
-		.add_plugin(LogDiagnosticsPlugin::default())     
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())     
         .add_system_set(
             SystemSet::on_enter(GameState::Game)
                 .with_system(setup_fps_ui)

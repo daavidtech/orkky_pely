@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_fps_controller::controller::FpsControllerPlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rapier3d::render::RapierDebugRenderPlugin;
 use game_ui_plugin::GameUiPlugin;
@@ -10,20 +9,15 @@ use crate::animations::detect_animation_players;
 use crate::animations::link_animation_players;
 use crate::collisions::add_collisions;
 use crate::collisions::move_melee_hitbox;
+use crate::console_plugin::ConsolePlugin;
 use crate::despawn::despawn_screen;
 use crate::game_ui_plugin;
 use crate::gltf::unpack_gltf;
 use crate::input_handling::keyboard_handler;
 use crate::input_handling::mouse_handlers;
-use crate::map_changes::give_assets;
-use crate::map_changes::give_camera;
-use crate::map_changes::handle_map_changes;
-use crate::map_changes::handle_needs_template;
-use crate::types::AssetPacks;
-use crate::types::GameState;
-use crate::types::GltfRegister;
-use crate::types::MapTemplates;
-use crate::types::PlayerIds;
+use crate::map_changes::*;
+use crate::player_control::*;
+use crate::types::*;
 
 pub struct GamePlugin;
 
@@ -31,9 +25,9 @@ impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app
 			.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-			.add_plugin(FpsControllerPlugin)
 			.add_plugin(RapierDebugRenderPlugin::default())
 			.add_plugin(GameUiPlugin::default())
+			.add_plugin(ConsolePlugin::default())
 			.insert_resource(RapierConfiguration::default())
 			.insert_resource(MapTemplates::default())
 			.insert_resource(GltfRegister::default())
@@ -57,7 +51,10 @@ impl Plugin for GamePlugin {
 					.with_system(add_collisions)
 					.with_system(keyboard_handler)
 					.with_system(mouse_handlers)
-					.with_system(move_melee_hitbox)			
+					.with_system(move_melee_hitbox)
+					.with_system(handle_mouse_input)
+					.with_system(move_game_entity)
+					.with_system(display_events)
 			)
 			.add_system_set(
 				SystemSet::on_exit(GameState::Game).with_system(despawn_screen::<OnGameScreen>),
@@ -80,4 +77,54 @@ pub fn setup(
 	for entity in &camera_3d {
 		commands.entity(entity).despawn_recursive();
 	}
+}
+
+fn display_events(
+	mut commands: Commands,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut contact_force_events: EventReader<ContactForceEvent>,
+	query: Query<(Entity, &MeleeHitbox)>,
+	parents: Query<&Parent>,
+) {
+    for collision_event in collision_events.iter() {
+        // println!("Received collision event: {:?}", collision_event);
+		match collision_event {
+			CollisionEvent::Started(a, b, c) => {
+				let parent = match parents.get(a.clone()) {
+					Ok(p) => p,
+					Err(_) => continue,
+				};
+
+				let m = match query.get(parent.get()) {
+					Ok((_, m)) => m,
+					Err(_) => continue,
+				};
+
+				println!("Melee hitbox {:?} hit {:?}", m, b);
+			},
+			CollisionEvent::Stopped(_, _, _) => {},
+		}
+
+
+		match collision_event {
+			CollisionEvent::Started(a, b, c) => {
+				let parent = match parents.get(b.clone()) {
+					Ok(p) => p,
+					Err(_) => continue,
+				};
+
+				let m = match query.get(parent.get()) {
+					Ok((_, m)) => m,
+					Err(_) => continue,
+				};
+
+				println!("Melee hitbox {:?} hit {:?}", m, b);
+			},
+			CollisionEvent::Stopped(_, _, _) => {},
+		}
+    }
+
+    for contact_force_event in contact_force_events.iter() {
+        println!("Received contact force event: {:?}", contact_force_event);
+    }
 }
