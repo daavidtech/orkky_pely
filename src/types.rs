@@ -170,3 +170,12 @@ pub struct LifeLost;
 
 #[derive(Clone, Component)]
 pub struct LifeLeft;
+
+#[derive(Clone, Component)]
+
+pub struct Fps;
+
+#[derive(Component)]
+pub struct Line {
+	pub lines: Vec<String>,
+}
