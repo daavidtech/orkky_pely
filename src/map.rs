@@ -82,6 +82,7 @@ pub struct MapTemplate {
 	pub automatic_collision_mesh: Option<bool>,
 	#[serde(default)]
 	pub weapons: Vec<Weapon>,
+	pub death_sound_effect: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

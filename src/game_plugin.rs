@@ -80,11 +80,14 @@ pub fn setup(
 }
 
 fn display_events(
-	mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
     mut contact_force_events: EventReader<ContactForceEvent>,
-	query: Query<(Entity, &MeleeHitbox)>,
+	melee_hitboxes: Query<(Entity, &MeleeHitbox)>,
+	game_entities: Query<&GameEntity>,
+	template_map: Res<MapTemplates>,
 	parents: Query<&Parent>,
+	asset_server: Res<AssetServer>,
+	audio: Res<Audio>
 ) {
     for collision_event in collision_events.iter() {
         // println!("Received collision event: {:?}", collision_event);
@@ -95,30 +98,27 @@ fn display_events(
 					Err(_) => continue,
 				};
 
-				let m = match query.get(parent.get()) {
+				let m = match melee_hitboxes.get(parent.get()) {
 					Ok((_, m)) => m,
 					Err(_) => continue,
 				};
 
-				println!("Melee hitbox {:?} hit {:?}", m, b);
-			},
-			CollisionEvent::Stopped(_, _, _) => {},
-		}
-
-
-		match collision_event {
-			CollisionEvent::Started(a, b, c) => {
-				let parent = match parents.get(b.clone()) {
-					Ok(p) => p,
+				let game_entity = match game_entities.get(b.clone()) {
+					Ok(g) => g,
 					Err(_) => continue,
 				};
 
-				let m = match query.get(parent.get()) {
-					Ok((_, m)) => m,
-					Err(_) => continue,
+				let template = match template_map.templates.get(&game_entity.template) {
+					Some(t) => t,
+					None => continue,
 				};
 
 				println!("Melee hitbox {:?} hit {:?}", m, b);
+
+				if let Some(sound_effect) = &template.death_sound_effect {
+					let music = asset_server.load(sound_effect);
+					audio.play(music);
+				}
 			},
 			CollisionEvent::Stopped(_, _, _) => {},
 		}
