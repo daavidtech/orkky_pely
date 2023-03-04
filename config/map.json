@@ -29,7 +29,8 @@
 				}
 			},
 			"initial_transform": [0, -1.0, 0],
-			"mass": 5
+			"mass": 5,
+			"death_sound_effect": "wilhelm_scream.ogg"
 		},
 		{
 			"name": "Crossbow",
