@@ -9,7 +9,10 @@ pub struct Console {
 }
 
 #[derive(Component)]
-pub struct ConsoleLines;
+pub struct ConsoleUI;
+
+#[derive(Component)]
+pub struct ConsoleHistory;
 
 #[derive(Component)]
 pub struct ActiveConsoleLine;
@@ -33,7 +36,7 @@ fn toggle_console(
 	mut console: ResMut<Console>,
 	asset_server: Res<AssetServer>,
 	keyboard: Res<Input<KeyCode>>,
-	console_lines: Query<Entity, With<ConsoleLines>>,
+	console_lines: Query<Entity, With<ConsoleUI>>,
 ) {
 	let just_pressed = keyboard.get_just_pressed();
 
@@ -54,31 +57,73 @@ fn toggle_console(
 					commands.spawn((
 						NodeBundle {
 							style: Style {
-								size: Size::new(Val::Px(800.0), Val::Percent(30.0)),
 								position: UiRect {
-									right: Val::Px(400.0),
-									..Default::default()
+									right: Val::Percent(20.0),
+									left: Val::Percent(20.0),
+									bottom: Val::Percent(70.0),
+									top: Val::Percent(0.0),
 								},
+								position_type: PositionType::Absolute,
 								border: UiRect::all(Val::Px(20.0)),
 								flex_direction: FlexDirection::Column,
+								overflow: Overflow::Hidden,
 								..Default::default()
 							},
 							background_color: Color::rgba(0.0, 0.0, 0.0, 0.5).into(),
 							..Default::default()
 						},
-						ConsoleLines,
+						ConsoleUI,
 					)).with_children(|parent| {
 						parent.spawn((
-							TextBundle::from_section(
-								"",
-								TextStyle {
-									font: asset_server.load("FiraSans-Bold.ttf"),
-									font_size: 10.0,
-									color: Color::WHITE,
+							NodeBundle {
+								style: Style {
+									position: UiRect {
+										right: Val::Percent(0.0),
+										left: Val::Percent(0.0),
+										bottom: Val::Percent(10.0),
+										top: Val::Percent(0.0),
+									},
+									position_type: PositionType::Absolute,
+									border: UiRect::all(Val::Px(20.0)),
+									overflow: Overflow::Hidden,
+									flex_direction: FlexDirection::ColumnReverse,
+									..Default::default()
 								},
-							),
-							ActiveConsoleLine,
+								..Default::default()		
+							},
+							ConsoleHistory
 						));
+
+						parent.spawn(
+							NodeBundle {
+								style: Style {
+									position: UiRect {
+										right: Val::Percent(0.0),
+										left: Val::Percent(0.0),
+										bottom: Val::Percent(0.0),
+										top: Val::Percent(90.0),
+									},
+									position_type: PositionType::Relative,
+									border: UiRect::all(Val::Px(20.0)),
+									overflow: Overflow::Hidden,
+									..Default::default()
+								},
+								..Default::default()		
+							}
+						).with_children(|parent| {
+							parent.spawn((
+								TextBundle::from_section(
+									"MISSÄ SÄ OOT??",
+									TextStyle {
+										font: asset_server.load("FiraSans-Bold.ttf"),
+										font_size: 10.0,
+										color: Color::WHITE
+									},
+								),
+								ActiveConsoleLine,
+							));
+						});
+						
 					});
 					console.active = true;
 				}
@@ -109,7 +154,7 @@ fn console_keyboard_handler(
 	mut console: ResMut<Console>,
 	asset_server: Res<AssetServer>,
 	keyboard: Res<Input<KeyCode>>,
-	console_lines: Query<Entity, With<ConsoleLines>>,
+	console_lines: Query<Entity, With<ConsoleHistory>>,
 ) {
 	if !console.active {
 		return;
@@ -134,15 +179,28 @@ fn console_keyboard_handler(
 
 				console_lines.with_children(|parent| {
 					parent.spawn(
-						TextBundle::from_section(
-							current_line,
-							TextStyle {
-								font: asset_server.load("FiraSans-Bold.ttf"),
-								font_size: 10.0,
-								color: Color::WHITE,
+						NodeBundle {
+							style: Style {
+								size: Size {
+									height: Val::Px(10.0),
+									..Default::default()
+								},
+								..Default::default()
 							},
-						)
-					);
+							..Default::default()		
+						}
+					).with_children(|parent| {
+						parent.spawn(
+							TextBundle::from_section(
+								current_line,
+								TextStyle {
+									font: asset_server.load("FiraSans-Bold.ttf"),
+									font_size: 10.0,
+									color: Color::WHITE,
+								},
+							)
+						);
+					});					
 				});
 			},
 			// TODO handle spaces and other similar keys
