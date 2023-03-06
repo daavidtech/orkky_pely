@@ -48,7 +48,7 @@ fn main() {
 		}))
 		.add_startup_system(initial_grab_cursor)
 		.add_state(GameState::Game)	
-		.add_plugin(WorldInspectorPlugin::new())
+		
 		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)

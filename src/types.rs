@@ -188,3 +188,5 @@ pub struct EntityScene;
 pub struct NewMapChanges {
 	pub changes: Vec<MapChange>
 }
+#[derive(Component)]
+pub struct Fps;

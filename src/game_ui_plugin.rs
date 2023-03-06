@@ -29,6 +29,7 @@ impl Plugin for GameUiPlugin {
         .add_system_set(
             SystemSet::on_update(GameState::Game)
 			.with_system(update_health)
+            .with_system(fps_display_system)
         );
     
 
