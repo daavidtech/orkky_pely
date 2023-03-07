@@ -1,7 +1,6 @@
-use std::str::Lines;
+
 use bevy::diagnostic::Diagnostics;
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
-use bevy::diagnostic::LogDiagnosticsPlugin;
 use bevy::prelude::*;
 use crate::types::Fps;
 use crate::types::GameEntity;

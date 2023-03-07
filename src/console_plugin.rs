@@ -209,14 +209,21 @@ fn console_keyboard_handler(
                     });                    
                 });
             },
-            10..=35 => {
+            
+			
+			10..=35 => {
 
                 let my_u32 = variant_index + 55;
                 let my_char = std::char::from_u32(my_u32 as u32).unwrap();
                 console.current_line += &my_char.to_string();
             },
             // TODO handle spaces and other similar keys
-            _ => {
+            
+			76 => {
+				console.current_line += " ";
+		   }
+			
+			_ => {
                  continue;
             }
         };
