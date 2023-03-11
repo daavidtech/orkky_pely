@@ -4,7 +4,6 @@ use bevy::ecs::system::EntityCommands;
 use bevy::gltf::Gltf;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-
 use crate::map::CameraType;
 use crate::map::Light;
 use crate::map::MapEntityPhysics;
@@ -27,6 +26,7 @@ use crate::types::NeedsCamera;
 use crate::types::NeedsTemplate;
 use crate::types::PlayerCamera;
 use crate::types::PlayerIds;
+use crate::types::TargetPosition;
 use crate::types::UnloadedGltfAsset;
 use crate::types::You;
 
@@ -113,10 +113,12 @@ fn spaw_map_entity(
 	commands: &mut Commands,
 	entity: &MapEntity,
 	player_ids: &mut ResMut<PlayerIds>,
+	
 ) {
 	log::info!("Spawning map entity: {}", entity.template);
 
 	let game_entity = GameEntity {
+		npc:entity.npc,
 		entity_id: entity.entity_id.clone(),
 		template: entity.template.clone(),
 		..Default::default()
@@ -147,6 +149,7 @@ fn spaw_map_entity(
 
 	new_component.insert(entity_transform.clone());
 
+
 	new_component.insert(
 		NeedsTemplate {
 			template: entity.template.clone(),
@@ -154,10 +157,29 @@ fn spaw_map_entity(
 		}
 	);
 
+
+	if let Some(true) = entity.npc{
+
+		new_component.insert(TargetPosition{
+			x: 30.0,
+			z: 20.0
+		});
+		new_component.insert(Name::new("villager"));
+
+	}
+
 	if let Some(true) = entity.player {
 		let player_id = player_ids.provide_player_id(&entity.entity_id);
 
 		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
+
+	
+
+		
+
+	
+
+		
 
 		new_component.insert((
 			You,
@@ -248,6 +270,7 @@ fn spawn_shape(
 					..Default::default()
 				}
 			);
+
 		},
 		MapShapeType::Plane(plane) => {
 			log::info!("spawning plane {:?}", plane);

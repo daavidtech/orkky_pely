@@ -43,7 +43,8 @@ pub struct MapEntity {
 	pub initial_position: Option<[f32; 3]>,
 	pub initial_rotation: Option<[f32; 3]>,
 	pub scale: Option<f32>,
-	pub player: Option<bool>
+	pub player: Option<bool>,
+	pub npc: Option<bool>
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -190,3 +190,23 @@ pub struct NewMapChanges {
 }
 #[derive(Component)]
 pub struct Fps;
+
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Npc {
+    pub speed: f32,
+}
+
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Health {
+    pub value: i32,
+}
+
+
+#[derive(Clone, Component, Default)]
+pub struct TargetPosition {
+	pub x: f32,
+	pub z: f32
+}
+	
