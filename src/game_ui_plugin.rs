@@ -47,8 +47,6 @@ fn fps_display_system(diagnostics: Res<Diagnostics>, mut query: Query<(&Fps, &mu
 }
 
 
-
-
 fn setup_fps_ui(mut commands: Commands, asset_server: Res<AssetServer>,) {
     let font = asset_server.load("FiraSans-Bold.ttf");
     commands.spawn((TextBundle {
@@ -164,7 +162,6 @@ fn update_health(
     let max_pixelwidth = 500.0;
     let health = max_pixelwidth * (game_entity.curr_health / game_entity.max_health);
     style.size.width = Val::Px(health);
-
 
 }
 
