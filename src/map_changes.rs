@@ -98,7 +98,10 @@ fn handle_map_template(
 				},
 				MapEntityPhysics::Static => {
 					entity_commands.insert(RigidBody::Fixed);
-				}
+				},
+				MapEntityPhysics::Kinematic => {
+					entity_commands.insert(RigidBody::KinematicVelocityBased);
+				},
 			}
 		},
 		None => {}
