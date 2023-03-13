@@ -1,3 +1,5 @@
+
+
 use bevy::prelude::*;
 use bevy::reflect::Enum;
 
@@ -51,7 +53,7 @@ fn toggle_console(
 						Err(_) => continue,
 					};
 
-					consolines.despawn();
+					consolines.despawn_recursive();
 					console.active = false;
 				} else {
 					commands.spawn((
@@ -81,12 +83,13 @@ fn toggle_console(
 										right: Val::Percent(0.0),
 										left: Val::Percent(0.0),
 										bottom: Val::Percent(10.0),
-										top: Val::Percent(0.0),
+										top: Val::Percent(-500.0),
 									},
 									position_type: PositionType::Absolute,
 									border: UiRect::all(Val::Px(20.0)),
 									overflow: Overflow::Hidden,
-									flex_direction: FlexDirection::ColumnReverse,
+									flex_direction: FlexDirection::Column,
+									justify_content: JustifyContent::FlexEnd,
 									..Default::default()
 								},
 								..Default::default()		
@@ -113,7 +116,7 @@ fn toggle_console(
 						).with_children(|parent| {
 							parent.spawn((
 								TextBundle::from_section(
-									"MISSÄ SÄ OOT??",
+									"",
 									TextStyle {
 										font: asset_server.load("FiraSans-Bold.ttf"),
 										font_size: 10.0,
@@ -159,54 +162,70 @@ fn console_keyboard_handler(
 	if !console.active {
 		return;
 	}
+	
 
 	let just_pressed = keyboard.get_just_pressed();
 
-	for key in just_pressed {
-		match key {
-			KeyCode::Back => {
-				console.current_line.pop();
-			},
-			KeyCode::Return => {
-				let current_line = console.current_line.clone();
-				console.new_lines.push(current_line.clone());
-				console.current_line.clear();
+    for key in just_pressed {
+        let variant_index = key.variant_index();
+ 
+        match variant_index {
+            74 => {
+                console.current_line.pop();
+            },
+            75 => {
+                let current_line = console.current_line.clone();
+                console.new_lines.push(current_line.clone());
+                console.current_line.clear();
 
-				let mut console_lines = match console_lines.get_single() {
-					Ok(entity) => commands.entity(entity),
-					Err(_) => continue,
-				};
+                let mut console_lines = match console_lines.get_single() {
+                    Ok(entity) => commands.entity(entity),
+                    Err(_) => continue,
+                };
 
-				console_lines.with_children(|parent| {
-					parent.spawn(
-						NodeBundle {
-							style: Style {
-								size: Size {
-									height: Val::Px(10.0),
-									..Default::default()
-								},
-								..Default::default()
-							},
-							..Default::default()		
-						}
-					).with_children(|parent| {
-						parent.spawn(
-							TextBundle::from_section(
-								current_line,
-								TextStyle {
-									font: asset_server.load("FiraSans-Bold.ttf"),
-									font_size: 10.0,
-									color: Color::WHITE,
-								},
-							)
-						);
-					});					
-				});
-			},
-			// TODO handle spaces and other similar keys
+                console_lines.with_children(|parent| {
+                    parent.spawn(
+                        NodeBundle {
+                            style: Style {
+                                size: Size {
+                                    height: Val::Px(10.0),
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            },
+                            ..Default::default()        
+                        }
+                    ).with_children(|parent| {
+                        parent.spawn(
+                            TextBundle::from_section(
+                                current_line,
+                                TextStyle {
+                                    font: asset_server.load("FiraSans-Bold.ttf"),
+                                    font_size: 10.0,
+                                    color: Color::WHITE,
+                                },
+                            )
+                        );
+                    });                    
+                });
+            },
+            
+			
+			10..=35 => {
+
+                let my_u32 = variant_index + 55;
+                let my_char = std::char::from_u32(my_u32 as u32).unwrap();
+                console.current_line += &my_char.to_string();
+            },
+            // TODO handle spaces and other similar keys
+            
+			76 => {
+				console.current_line += " ";
+		   }
+			
 			_ => {
-				console.current_line += key.variant_name();
-			}
-		};
-	}
+                 continue;
+            }
+        };
+    }
 }

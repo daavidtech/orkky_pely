@@ -42,16 +42,16 @@ fn main() {
     App::new()
 		.insert_resource(changes_receiver)
 		.insert_resource(keymap)
-    	.add_plugins(DefaultPlugins.set(LogPlugin {
+		.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,
 			..Default::default()
 		}))
 		.add_startup_system(initial_grab_cursor)
-		.add_state(GameState::Game)
-        .add_plugin(SplashPlugin)
+		.add_state(GameState::Game)	
+		
+		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)
 		.add_plugin(WorldInspectorPlugin::new())
 		.run();
 }
-
