@@ -91,6 +91,7 @@ pub struct GameEntity {
 	pub move_intent: MoveIntent,
 	pub yaw: f32,
 	pub pitch: f32,
+	pub npc: bool,
 }
 
 #[derive(Clone, Resource, Default)]
@@ -210,3 +211,16 @@ pub struct TargetPosition {
 	pub z: f32
 }
 	
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct Point {
+	pub x: i32,
+	pub z: i32,
+	pub y: i32,
+}
+
+pub struct NavigationMeshComponent {
+	pub left_up: Point,
+	pub right_down: Point,
+	pub right_up: Point,
+	pub left_down: Point,
+}

@@ -118,7 +118,7 @@ fn spaw_map_entity(
 	log::info!("Spawning map entity: {}", entity.template);
 
 	let game_entity = GameEntity {
-		npc:entity.npc,
+		npc: entity.npc.unwrap_or(false),
 		entity_id: entity.entity_id.clone(),
 		template: entity.template.clone(),
 		..Default::default()
