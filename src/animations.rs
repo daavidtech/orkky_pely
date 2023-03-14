@@ -331,6 +331,7 @@ pub fn detect_animation_players(
 pub fn ensure_animation(
 	mut commands: Commands,
 	query: Query<(Entity, &GameEntity, Option<&CurrentAnimation>)>,
+	asset_packs: Res<AssetPacks>,
 ) {
 	for (entity, game_entity, current_animation) in query.iter() {
 		let mut entity_commands = commands.entity(entity);
@@ -366,7 +367,9 @@ pub fn ensure_animation(
 			continue;
 		}
 
-		if game_entity.is_moving() {
+		let moving = game_entity.is_moving();
+
+		if moving {
 			if let Some(walk_animation) = &game_entity.walk_animation {
 				let cond = match current_animation {
 					Some(current_animation) => current_animation.animation != *walk_animation,
@@ -383,23 +386,52 @@ pub fn ensure_animation(
 					});
 				}
 			}
-		} else {
-			if let Some(idle_animation) = &game_entity.idle_animation {
-				let cond = match current_animation {
-					Some(current_animation) => current_animation.animation != *idle_animation,
-					None => true,
-				};
 
-				if cond {
-					log::info!("[{}] changing to idle animation", game_entity.entity_id);
+			continue;
+		}
 
-					entity_commands.insert(StartAnimation {
-						asset: asset.clone(),
-						animation: idle_animation.clone(),
-						repeat: true,
-					});
-				}
+		if let Some(idle_animation) = &game_entity.idle_animation {
+			let cond = match current_animation {
+				Some(current_animation) => current_animation.animation != *idle_animation,
+				None => true,
+			};
+
+			if cond {
+				log::info!("[{}] changing to idle animation", game_entity.entity_id);
+
+				entity_commands.insert(StartAnimation {
+					asset: asset.clone(),
+					animation: idle_animation.clone(),
+					repeat: true,
+				});
 			}
+
+			continue;
+		}
+
+		let (name, _) = match asset_packs.asset_packs.get(asset) {
+			Some(asset_pack) => {
+				match asset_pack.named_animations.iter().next() {
+					Some(s) => s,
+					None => continue,
+				}
+			},
+			None => continue,
+		};
+
+		let cond = match current_animation {
+			Some(current_animation) => current_animation.animation != *name,
+			None => true,
+		};
+
+		if cond {
+			log::info!("[{}] changing to first animation {}", game_entity.entity_id, name);
+
+			entity_commands.insert(StartAnimation {
+				asset: asset.clone(),
+				animation: name.to_string(),
+				repeat: true,
+			});
 		}
 	}
 }
