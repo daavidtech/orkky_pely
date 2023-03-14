@@ -3,6 +3,7 @@ use bevy::utils::HashMap;
 use bevy::utils::HashSet;
 
 use crate::types::AssetPacks;
+use crate::types::CurrentAnimation;
 use crate::types::GameEntity;
 use crate::types::StartAnimation;
 use crate::types::StopAnimation;
@@ -271,11 +272,18 @@ pub fn handle_start_animation(
 		}
 
 		if start_animation.repeat {
+			log::info!("[{}] repeating animation", game_entity.entity_id);
 			player.repeat();
 		}
 
 		let mut entity_command = commands.entity(entity);
 		entity_command.remove::<StartAnimation>();
+
+		entity_command.insert(CurrentAnimation {
+			animation: start_animation.animation.clone(),
+			asset: start_animation.asset.clone(),
+			repeat: start_animation.repeat,
+		});
 	}
 }
 
@@ -302,6 +310,7 @@ pub fn handle_stop_animation(
 		let mut entity_command = commands.entity(entity);
 
 		entity_command.remove::<StopAnimation>();
+		entity_command.remove::<CurrentAnimation>();
 	}
 }
 
@@ -314,6 +323,83 @@ pub fn detect_animation_players(
 			log::info!("new animation player found {:?}", entity);
 
 			map.insert(entity);
+		}
+	}
+}
+
+
+pub fn ensure_animation(
+	mut commands: Commands,
+	query: Query<(Entity, &GameEntity, Option<&CurrentAnimation>)>,
+) {
+	for (entity, game_entity, current_animation) in query.iter() {
+		let mut entity_commands = commands.entity(entity);
+
+		let asset = match &game_entity.asset {
+			Some(asset) => asset,
+			None => continue,
+		};
+
+		if game_entity.attacking {
+			let current_weapon = match game_entity.weapons.get(game_entity.current_weapon) {
+				Some(current_weapon) => current_weapon,
+				None => continue,
+			};
+
+			if let Some(attack_animation) = &current_weapon.animation {
+				let cond = match current_animation {
+					Some(current_animation) => current_animation.animation != *attack_animation,
+					None => true,
+				};
+
+				if cond {
+					log::info!("[{}] changing to attack animation", game_entity.entity_id);
+
+					entity_commands.insert(StartAnimation {
+						asset: asset.clone(),
+						animation: attack_animation.clone(),
+						repeat: false,
+					});
+				}
+			}
+
+			continue;
+		}
+
+		if game_entity.is_moving() {
+			if let Some(walk_animation) = &game_entity.walk_animation {
+				let cond = match current_animation {
+					Some(current_animation) => current_animation.animation != *walk_animation,
+					None => true,
+				};
+
+				if cond {
+					log::info!("[{}] changing to walk animation", game_entity.entity_id);
+
+					entity_commands.insert(StartAnimation {
+						asset: asset.clone(),
+						animation: walk_animation.clone(),
+						repeat: true,
+					});
+				}
+			}
+		} else {
+			if let Some(idle_animation) = &game_entity.idle_animation {
+				let cond = match current_animation {
+					Some(current_animation) => current_animation.animation != *idle_animation,
+					None => true,
+				};
+
+				if cond {
+					log::info!("[{}] changing to idle animation", game_entity.entity_id);
+
+					entity_commands.insert(StartAnimation {
+						asset: asset.clone(),
+						animation: idle_animation.clone(),
+						repeat: true,
+					});
+				}
+			}
 		}
 	}
 }

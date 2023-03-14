@@ -3,10 +3,12 @@ use bevy_rapier3d::prelude::*;
 use bevy_rapier3d::render::RapierDebugRenderPlugin;
 use game_ui_plugin::GameUiPlugin;
 
+use crate::animations::ensure_animation;
 use crate::animations::handle_start_animation;
 use crate::animations::handle_stop_animation;
 use crate::animations::detect_animation_players;
 use crate::animations::link_animation_players;
+use crate::attack::handle_attack;
 use crate::collisions::add_collisions;
 use crate::collisions::move_melee_hitbox;
 use crate::console_plugin::ConsolePlugin;
@@ -55,6 +57,8 @@ impl Plugin for GamePlugin {
 					.with_system(handle_mouse_input)
 					.with_system(move_game_entity)
 					.with_system(display_events)
+					.with_system(ensure_animation)
+					.with_system(handle_attack)
 			)
 			.add_system_set(
 				SystemSet::on_exit(GameState::Game).with_system(despawn_screen::<OnGameScreen>),

@@ -67,6 +67,7 @@ pub struct MapTemplate {
 	pub iddle_animation: Option<String>,
 	pub walk_animation: Option<String>,
 	pub run_animation: Option<String>,
+	pub jump_animation: Option<String>,
 	pub reload_animation: Option<String>,
 	pub shoot_animation: Option<String>,
 	pub fps_camera_location: Option<[f32; 3]>,
