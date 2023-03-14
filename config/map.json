@@ -1,7 +1,7 @@
 {
 	"templates": [
 		{
-			"name": "Orc",
+			"name": "orc",
 			"asset": "orkki.glb",
 			"fps_camera_location": [0, 1.5, -0.5],
 			"third_person_camera_location": [0, 2.5, 4],
@@ -153,7 +153,14 @@
 		{
 			"template": "running_piece_of_shit",
 			"initial_position": [-20, 2, -20],
-			"scale": 3
+			"scale": 3,
+			"npc": true,
+			"move_cycle": [
+				[-20, 1, -20],
+				[24, 1, -20],
+				[9, 1, 2],
+				[2, 1, 25]
+			]
 		},
 		{
 			"template": "fox",
@@ -163,6 +170,17 @@
 			"move_cycle": [
 				[-20, 1, -20],
 				[20, 1, -20],
+				[5, 1, 2],
+				[10, 1, 25]
+			]
+		},
+		{
+			"template": "orc",
+			"initial_position": [0, 2, 0],
+			"npc": true,
+			"move_cycle": [
+				[20, 1, -27],
+				[20, 1, 27],
 				[5, 1, 2],
 				[10, 1, 25]
 			]
