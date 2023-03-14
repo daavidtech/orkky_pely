@@ -27,6 +27,7 @@ use crate::types::NeedsCamera;
 use crate::types::NeedsTemplate;
 use crate::types::PlayerCamera;
 use crate::types::PlayerIds;
+use crate::types::StartAnimation;
 use crate::types::UnloadedGltfAsset;
 use crate::types::You;
 
@@ -105,6 +106,18 @@ fn handle_map_template(
 			}
 		},
 		None => {}
+	}
+
+	if let Some(iddle_animation) = &template.iddle_animation {
+		game_entity.iddle_animation = Some(iddle_animation.clone());
+
+		entity_commands.insert(
+			StartAnimation {
+				asset: template.asset.clone().unwrap(),
+				animation: iddle_animation.clone(),
+				repeat: true,
+			}
+		);
 	}
 
 	if let Some(mass) = template.mass {

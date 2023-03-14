@@ -91,6 +91,39 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "troll_cave",
+			"asset": "troll_cave.glb"
+		},
+		{
+			"name": "running_piece_of_shit",
+			"asset": "kani.glb",
+			"iddle_animation": "running",
+			"initial_transform": [0, -0.3, 0],
+			"collider": {
+				"Cuboid": {
+					"x": 1,
+					"y": 0.8,
+					"z": 1
+				}
+			},
+			"physics": "Dynamic",
+			"death_sound_effect": "wilhelm_scream.ogg"
+		},
+		{
+			"name": "fox",
+			"asset": "fox.glb",
+			"iddle_animation": "running",
+			"initial_transform": [0, -20, 0],
+			"collider": {
+				"Cuboid": {
+					"x": 30,
+					"y": 25,
+					"z": 70
+				}
+			},
+			"physics": "Dynamic"
 		}
 	],
 	"entities": [
@@ -111,6 +144,20 @@
 			"template": "Villager",
 			"initial_position": [-20, 2, -5],
 			"scale": 2
+		},
+		{
+			"template": "troll_cave",
+			"initial_position": [5, 0, 5]
+		},
+		{
+			"template": "running_piece_of_shit",
+			"initial_position": [-20, 2, -20],
+			"scale": 3
+		},
+		{
+			"template": "fox",
+			"initial_position": [20, 2, -20],
+			"scale": 0.07
 		}
 	],
 	"lights": [
