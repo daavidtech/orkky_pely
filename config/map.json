@@ -73,6 +73,10 @@
 		{
 			"name": "Troll",
 			"asset": "troll.glb",
+			"iddle_animation": "idle",
+			"walk_animation": "walk",
+			"run_animation": "walk",
+			"jump_animation": "jump",
 			"initial_transform": [0, -2.0, 0],
 			"initial_rotation_y": 180,
 			"third_person_camera_location": [0, 2.1, 14],
@@ -80,7 +84,7 @@
 			"weapons": [
 				{
 					"weapon_type": "Melee",
-					"animation": "Armature|mixamo.com|Layer0",
+					"animation": "hit",
 					"hitbox": {
 						"box": {
 

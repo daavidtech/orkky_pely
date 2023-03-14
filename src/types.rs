@@ -33,6 +33,13 @@ pub struct StartAnimation {
 	pub repeat: bool,
 }
 
+#[derive(Clone, Component, Default)]
+pub struct CurrentAnimation {
+	pub asset: String,
+	pub animation: String,
+	pub repeat: bool,
+}
+
 #[derive(Clone, Component)]
 pub struct StopAnimation;
 
@@ -81,8 +88,9 @@ pub struct GameEntity {
 	pub current_weapon: usize,
 	pub weapons: Vec<Weapon>,
 	pub asset: Option<String>,
-	pub iddle_animation: Option<String>,
+	pub idle_animation: Option<String>,
 	pub walk_animation: Option<String>,
+	pub jump_animation: Option<String>,
 	pub run_animation: Option<String>,
 	pub reload_animation: Option<String>,
 	pub shoot_animation: Option<String>,
@@ -92,6 +100,16 @@ pub struct GameEntity {
 	pub yaw: f32,
 	pub pitch: f32,
 	pub npc: bool,
+	pub attacking: bool,
+}
+
+impl GameEntity {
+	pub fn is_moving(&self) -> bool {
+		self.move_intent.move_forward || 
+		self.move_intent.move_backward || 
+		self.move_intent.move_leftward || 
+		self.move_intent.move_rightward
+	}
 }
 
 #[derive(Clone, Resource, Default)]
@@ -120,9 +138,6 @@ impl PlayerIds {
 		player_id
 	}
 }
-
-#[derive(Clone, Component)]
-pub struct StartAttack;
 
 #[derive(Clone, Component)]
 pub struct StopAttack;
@@ -192,18 +207,6 @@ pub struct NewMapChanges {
 #[derive(Component)]
 pub struct Fps;
 
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-pub struct Npc {
-    pub speed: f32,
-}
-
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-pub struct Health {
-    pub value: i32,
-}
-
 
 #[derive(Clone, Component, Default)]
 pub struct TargetPosition {
@@ -240,4 +243,8 @@ impl MoveCycle {
 		self.current = (self.current + 1) % self.targets.len();
 		next
 	}
+}
+#[derive(Clone, Component, Default)]
+pub struct Attacking {
+	pub timer: Timer,
 }

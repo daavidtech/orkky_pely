@@ -32,6 +32,7 @@ mod player_control;
 mod math;
 mod path_finding;
 mod console_plugin;
+mod attack;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 

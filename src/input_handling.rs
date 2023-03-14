@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 use crate::console_plugin::Console;
@@ -5,6 +7,7 @@ use crate::map::WeaponType;
 use crate::types::GameEntity;
 use crate::types::MeleeHitbox;
 use crate::types::StartAnimation;
+use crate::types::Attacking;
 use crate::types::StopAnimation;
 use crate::types::You;
 
@@ -12,35 +15,26 @@ pub fn keyboard_handler(
 	keyboard_input: Res<Input<KeyCode>>,
 	mut query: Query<(Entity, &mut GameEntity, &mut Transform, &You)>
 ) {
-	let (_, mut game_entity, _, _) = match query.get_single_mut() {
+	let (entity, mut game_entity, _, _) = match query.get_single_mut() {
 		Ok(q) => q,
 		Err(_) => {
 			return;
 		},
 	};
 
-	let mut just_move_backward = false;
-	let mut just_move_rightward = false;
-	let mut just_move_leftward = false;
-	let mut just_move_forward = false;
-
 	for key in keyboard_input.get_just_pressed() {
 		match key {
 			KeyCode::W => {
 				game_entity.move_intent.move_forward = true;
-				just_move_forward = true;
 			},
 			KeyCode::A => {
 				game_entity.move_intent.move_leftward = true;
-				just_move_leftward = true;
 			},
 			KeyCode::S => {
 				game_entity.move_intent.move_backward = true;
-				just_move_backward = true;
 			},
 			KeyCode::D => {
 				game_entity.move_intent.move_rightward = true;
-				just_move_rightward = true;
 			},
 			_ => {}
 		}
@@ -50,19 +44,15 @@ pub fn keyboard_handler(
 		match key {
 			KeyCode::W => {
 				game_entity.move_intent.move_forward = false;
-				just_move_forward = false;
 			},
 			KeyCode::A => {
 				game_entity.move_intent.move_leftward = false;
-				just_move_leftward = false;
 			},
 			KeyCode::S => {
-				game_entity.move_intent.move_backward = false;
-				just_move_backward = false;
+				game_entity.move_intent.move_backward  = false;
 			},
 			KeyCode::D => {
 				game_entity.move_intent.move_rightward = false;
-				just_move_rightward = false;
 			},
 			_ => {}
 		}
@@ -228,7 +218,7 @@ pub fn mouse_handlers(
 	mut commands: Commands,
 	console: Res<Console>,
 	mouse_input: Res<Input<MouseButton>>,
-	query: Query<(Entity, &You, &GameEntity)>,
+	mut query: Query<(Entity, &You, &mut GameEntity)>,
 ) {
 	if console.active {
 		return;
@@ -236,7 +226,7 @@ pub fn mouse_handlers(
 
 	let pressed = mouse_input.get_just_pressed();
 
-	let (entity, game_entity) = match query.get_single() {
+	let (entity, mut game_entity) = match query.get_single_mut() {
 		Ok((entity, _, game_entity)) => (entity, game_entity),
 		Err(_) => return,
 	};
@@ -246,6 +236,12 @@ pub fn mouse_handlers(
 	for p in pressed {
 		if let MouseButton::Left = p {
 				log::info!("left mouse button pressed");
+
+				game_entity.attacking = true;
+
+				entity_commands.insert(Attacking {
+					timer: Timer::new(Duration::from_secs_f32(1.7), TimerMode::Once),
+				});
 
 				// entity_commands.insert(StartAttack);
 

@@ -52,7 +52,7 @@ fn handle_map_template(
 		None => {}
 	}
 
-	game_entity.iddle_animation = template.iddle_animation.clone();
+	game_entity.idle_animation = template.iddle_animation.clone();
 	game_entity.walk_animation = template.walk_animation.clone();
 	game_entity.run_animation = template.run_animation.clone();
 	game_entity.reload_animation = template.reload_animation.clone();
@@ -109,17 +109,6 @@ fn handle_map_template(
 		None => {}
 	}
 
-	if let Some(iddle_animation) = &template.iddle_animation {
-		game_entity.iddle_animation = Some(iddle_animation.clone());
-
-		entity_commands.insert(
-			StartAnimation {
-				asset: template.asset.clone().unwrap(),
-				animation: iddle_animation.clone(),
-				repeat: true,
-			}
-		);
-	}
 
 	if let Some(mass) = template.mass {
 		entity_commands.insert(AdditionalMassProperties::Mass(mass));
@@ -199,7 +188,7 @@ fn spaw_map_entity(
 	if let Some(true) = entity.player {
 		let player_id = player_ids.provide_player_id(&entity.entity_id);
 
-		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
+		log::info!("[{}] entity is player {}", entity.entity_id, player_id);		
 
 		new_component.insert((
 			You,
