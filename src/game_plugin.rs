@@ -17,6 +17,7 @@ use crate::input_handling::keyboard_handler;
 use crate::input_handling::mouse_handlers;
 use crate::map_changes::*;
 use crate::npc::NpcPlugin;
+use crate::npc::handle_cycle;
 use crate::player_control::*;
 use crate::types::*;
 
@@ -57,6 +58,7 @@ impl Plugin for GamePlugin {
 					.with_system(handle_mouse_input)
 					.with_system(move_game_entity)
 					.with_system(display_events)
+					.with_system(handle_cycle)
 			)
 			.add_system_set(
 				SystemSet::on_exit(GameState::Game).with_system(despawn_screen::<OnGameScreen>),

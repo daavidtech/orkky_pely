@@ -224,3 +224,20 @@ pub struct NavigationMeshComponent {
 	pub right_up: Point,
 	pub left_down: Point,
 }
+
+#[derive(Clone, Component, Default)]
+pub struct NPC;
+
+#[derive(Clone, Component, Default, Debug)]
+pub struct MoveCycle {
+	pub current: usize,
+	pub targets: Vec<Point>
+}
+
+impl MoveCycle {
+	pub fn get_next(&mut self) -> Point {
+		let next = self.targets[self.current].clone();
+		self.current = (self.current + 1) % self.targets.len();
+		next
+	}
+}

@@ -17,17 +17,18 @@ use crate::map::MapTemplate;
 use crate::map_loader::MapChangesReceiver;
 use crate::types::AddCollidingMesh;
 use crate::types::AssetPacks;
+use crate::types::MoveCycle;
 use crate::types::EntityScene;
 use crate::types::GameEntity;
 use crate::types::GltfRegister;
 use crate::types::MapTemplates;
+use crate::types::NPC;
 use crate::types::NeedsAsset;
 use crate::types::NeedsCamera;
 use crate::types::NeedsTemplate;
 use crate::types::PlayerCamera;
 use crate::types::PlayerIds;
-use crate::types::TargetPosition;
-use crate::types::StartAnimation;
+use crate::types::Point;
 use crate::types::UnloadedGltfAsset;
 use crate::types::You;
 
@@ -173,29 +174,32 @@ fn spaw_map_entity(
 		}
 	);
 
-
 	if let Some(true) = entity.npc{
+		new_component.insert(NPC);
+	}
 
-		new_component.insert(TargetPosition{
-			x: 30.0,
-			z: 20.0
-		});
-		new_component.insert(Name::new("villager"));
+	if let Some(move_cycle) = &entity.move_cycle {
+		let mut cycle = MoveCycle::default();
 
+		for target in move_cycle {
+			cycle.targets.push(
+				Point {
+					x: target[0] as i32,
+					y: target[1] as i32,
+					z: target[2] as i32,
+				}
+			);
+		}
+
+		log::info!("move cycle {:?}", cycle);
+
+		new_component.insert(cycle);
 	}
 
 	if let Some(true) = entity.player {
 		let player_id = player_ids.provide_player_id(&entity.entity_id);
 
 		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
-
-	
-
-		
-
-	
-
-		
 
 		new_component.insert((
 			You,
