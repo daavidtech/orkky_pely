@@ -50,7 +50,8 @@ pub struct MapEntity {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MapEntityPhysics {
 	Static,
-	Dynamic
+	Dynamic,
+	Kinematic
 }
 
 impl Default for MapEntityPhysics {
