@@ -3,16 +3,25 @@ use pathfinding::prelude::bfs;
 use crate::types::NavigationMeshComponent;
 use crate::types::Point;
 
-fn filtter_relevant_points() -> Vec<Point> {
+fn find_current_mesh<'a>(p: &Point, navigation_mesh_components: &'a Vec<NavigationMeshComponent>) -> &'a NavigationMeshComponent {
+	navigation_mesh_components
+		.iter()
+		.find(|mesh| {
+			p.x >= mesh.left_up.x && p.x <= mesh.right_down.x &&
+			p.z >= mesh.left_up.z && p.z <= mesh.right_down.z
+		}).unwrap()
+}
 
+fn is_connected_mesh(curr: &NavigationMeshComponent, mesh: &NavigationMeshComponent) -> bool {
+	true
 }
 
 fn next_possible_points(p: &Point, navigation_mesh_components: &Vec<NavigationMeshComponent>) -> Vec<Point> {
-	let navigation_mesh_components = navigation_mesh_components.iter().filter(|p| {
-		p.left_up.x <= p.x && p.left_up.z <= p.z && p.right_down.x >= p.x && p.right_down.z >= p.z
-	});
+	let current_mesh = find_current_mesh(p, navigation_mesh_components);
 
-	let v = navigation_mesh_components.collect::<Vec<_>>();
+	let relevant_meshes = navigation_mesh_components
+		.iter()
+		.filter(|mesh| is_connected_mesh(current_mesh, mesh));
 
 	let mut possible_points = vec![
 		Point { x: p.x, z: p.z + 1, y: p.y },
@@ -25,23 +34,18 @@ fn next_possible_points(p: &Point, navigation_mesh_components: &Vec<NavigationMe
 		Point { x: p.x - 1, z: p.z + 1, y: p.y },
 	];
 
-	if is_close_to_ladder() {
-		possible_points.push(Point { x: p.x, z: p.z, y: p.y + 1 });
-		possible_points.push(Point { x: p.x, z: p.z, y: p.y - 1 });
-	}
-
 	possible_points
 }
 
 // DOTO handle multiple navigation meshes
 pub fn find_path(
-	navigation_mesh_components: &Vec<NavigationMeshComponent>,
+	mesh_components: &Vec<NavigationMeshComponent>,
 	src: &Point,
 	dst: &Point,
 ) -> Option<Vec<Point>> {
 	let result = bfs(
 		src, 
-		|p| next_possible_points(p), 
+		|p| next_possible_points(p, mesh_components), 
 		|p| *p == *dst
 	);
 
@@ -142,5 +146,41 @@ mod tests {
 			Point { x: 1, z: 2, y: 0 },
 			Point { x: 0, z: 3, y: 0 },
 		]);
+	}
+
+	#[test]
+	fn test_is_connected() {
+		let curr = NavigationMeshComponent {
+			left_up: Point { x: 0, z: 0, y: 0 },
+			right_up: Point { x: 1, z: 0, y: 0 },
+			left_down: Point { x: 0, z: 1, y: 0 },
+			right_down: Point { x: 1, z: 1, y: 0 },
+		};
+		let mesh = NavigationMeshComponent {
+			left_up: Point { x: 0, z: 1, y: 0 },
+			right_up: Point { x: 1, z: 1, y: 0 },
+			left_down: Point { x: 0, z: 2, y: 0 },
+			right_down: Point { x: 2, z: 2, y: 0 },
+		};
+
+		assert_eq!(is_connected_mesh(&curr, &mesh), true);
+	}
+
+	#[test]
+	fn test_is_not_connected() {
+		let curr = NavigationMeshComponent {
+			left_up: Point { x: 0, z: 0, y: 0 },
+			right_up: Point { x: 1, z: 0, y: 0 },
+			left_down: Point { x: 0, z: 1, y: 0 },
+			right_down: Point { x: 1, z: 1, y: 0 },
+		};
+		let mesh = NavigationMeshComponent {
+			left_up: Point { x: 0, z: 1, y: 0 },
+			right_up: Point { x: 1, z: 1, y: 0 },
+			left_down: Point { x: 0, z: 3, y: 0 },
+			right_down: Point { x: 2, z: 3, y: 0 },
+		};
+
+		assert_eq!(is_connected_mesh(&curr, &mesh), false);
 	}
 }
