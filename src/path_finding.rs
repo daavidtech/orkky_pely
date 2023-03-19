@@ -12,16 +12,58 @@ fn find_current_mesh<'a>(p: &Point, navigation_mesh_components: &'a Vec<Navigati
 		}).unwrap()
 }
 
-fn is_connected_mesh(curr: &NavigationMeshComponent, mesh: &NavigationMeshComponent) -> bool {
-	true
+pub struct AABB {
+    pub min: Point,
+    pub max: Point,
 }
+
+impl NavigationMeshComponent {
+    pub fn aabb(&self) -> AABB {
+        let min_x = self.left_up.x.min(self.right_down.x).min(self.right_up.x).min(self.left_down.x);
+        let max_x = self.left_up.x.max(self.right_down.x).max(self.right_up.x).max(self.left_down.x);
+
+        let min_y = self.left_up.y.min(self.right_down.y).min(self.right_up.y).min(self.left_down.y);
+        let max_y = self.left_up.y.max(self.right_down.y).max(self.right_up.y).max(self.left_down.y);
+
+        let min_z = self.left_up.z.min(self.right_down.z).min(self.right_up.z).min(self.left_down.z);
+        let max_z = self.left_up.z.max(self.right_down.z).max(self.right_up.z).max(self.left_down.z);
+
+        AABB {
+            min: Point {
+                x: min_x,
+                y: min_y,
+                z: min_z,
+            },
+            max: Point {
+                x: max_x,
+                y: max_y,
+                z: max_z,
+            },
+        }
+    }
+}
+
+pub fn aabb_collision(a: &AABB, b: &AABB) -> bool {
+    a.min.x <= b.max.x && a.max.x >= b.min.x
+        && a.min.y <= b.max.y && a.max.y >= b.min.y
+        && a.min.z <= b.max.z && a.max.z >= b.min.z
+}
+
+pub fn shapes_collision(a: &NavigationMeshComponent, b: &NavigationMeshComponent) -> bool {
+    let aabb_a = a.aabb();
+    let aabb_b = b.aabb();
+    aabb_collision(&aabb_a, &aabb_b)
+}
+	
+
+
 
 fn next_possible_points(p: &Point, navigation_mesh_components: &Vec<NavigationMeshComponent>) -> Vec<Point> {
 	let current_mesh = find_current_mesh(p, navigation_mesh_components);
 
 	let relevant_meshes = navigation_mesh_components
 		.iter()
-		.filter(|mesh| is_connected_mesh(current_mesh, mesh));
+		.filter(|mesh| shapes_collision(current_mesh, mesh));
 
 	let mut possible_points = vec![
 		Point { x: p.x, z: p.z + 1, y: p.y },
@@ -163,7 +205,7 @@ mod tests {
 			right_down: Point { x: 2, z: 2, y: 0 },
 		};
 
-		assert_eq!(is_connected_mesh(&curr, &mesh), true);
+		assert_eq!(shapes_collision(&curr, &mesh), true);
 	}
 
 	#[test]
@@ -175,12 +217,13 @@ mod tests {
 			right_down: Point { x: 1, z: 1, y: 0 },
 		};
 		let mesh = NavigationMeshComponent {
-			left_up: Point { x: 0, z: 1, y: 0 },
-			right_up: Point { x: 1, z: 1, y: 0 },
+			left_up: Point { x: 0, z: 2, y: 0 },
+			right_up: Point { x: 2, z: 2, y: 0 },
 			left_down: Point { x: 0, z: 3, y: 0 },
-			right_down: Point { x: 2, z: 3, y: 0 },
+			right_down: Point { x: 3, z: 3, y: 0 },
 		};
 
-		assert_eq!(is_connected_mesh(&curr, &mesh), false);
+		assert_eq!(shapes_collision(&curr, &mesh), false);
 	}
 }
+
