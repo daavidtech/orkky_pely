@@ -30,6 +30,7 @@ mod despawn;
 mod cursor;
 mod player_control;
 mod math;
+mod path_finding;
 mod console_plugin;
 mod attack;
 
@@ -49,7 +50,6 @@ fn main() {
 		}))
 		.add_startup_system(initial_grab_cursor)
 		.add_state(GameState::Game)	
-		
 		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)

@@ -147,7 +147,8 @@
 		{
 			"template": "Villager",
 			"initial_position": [-20, 2, -5],
-			"scale": 2
+			"scale": 2,
+			"npc": true
 		},
 		{
 			"template": "running_piece_of_shit",

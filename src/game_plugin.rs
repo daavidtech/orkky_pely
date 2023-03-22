@@ -18,6 +18,8 @@ use crate::gltf::unpack_gltf;
 use crate::input_handling::keyboard_handler;
 use crate::input_handling::mouse_handlers;
 use crate::map_changes::*;
+use crate::npc::NpcPlugin;
+use crate::npc::handle_cycle;
 use crate::player_control::*;
 use crate::types::*;
 
@@ -30,6 +32,7 @@ impl Plugin for GamePlugin {
 			.add_plugin(RapierDebugRenderPlugin::default())
 			.add_plugin(GameUiPlugin::default())
 			.add_plugin(ConsolePlugin::default())
+			.add_plugin(NpcPlugin)
 			.insert_resource(RapierConfiguration::default())
 			.insert_resource(MapTemplates::default())
 			.insert_resource(GltfRegister::default())
@@ -57,6 +60,7 @@ impl Plugin for GamePlugin {
 					.with_system(handle_mouse_input)
 					.with_system(move_game_entity)
 					.with_system(display_events)
+					.with_system(handle_cycle)
 					.with_system(ensure_animation)
 					.with_system(handle_attack)
 			)

@@ -4,7 +4,6 @@ use bevy::ecs::system::EntityCommands;
 use bevy::gltf::Gltf;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-
 use crate::map::CameraType;
 use crate::map::Light;
 use crate::map::MapEntityPhysics;
@@ -18,16 +17,18 @@ use crate::map::MapTemplate;
 use crate::map_loader::MapChangesReceiver;
 use crate::types::AddCollidingMesh;
 use crate::types::AssetPacks;
+use crate::types::MoveCycle;
 use crate::types::EntityScene;
 use crate::types::GameEntity;
 use crate::types::GltfRegister;
 use crate::types::MapTemplates;
+use crate::types::NPC;
 use crate::types::NeedsAsset;
 use crate::types::NeedsCamera;
 use crate::types::NeedsTemplate;
 use crate::types::PlayerCamera;
 use crate::types::PlayerIds;
-use crate::types::StartAnimation;
+use crate::types::Point;
 use crate::types::UnloadedGltfAsset;
 use crate::types::You;
 
@@ -118,10 +119,12 @@ fn spaw_map_entity(
 	commands: &mut Commands,
 	entity: &MapEntity,
 	player_ids: &mut ResMut<PlayerIds>,
+	
 ) {
 	log::info!("Spawning map entity: {}", entity.template);
 
 	let game_entity = GameEntity {
+		npc: entity.npc.unwrap_or(false),
 		entity_id: entity.entity_id.clone(),
 		template: entity.template.clone(),
 		..Default::default()
@@ -152,12 +155,35 @@ fn spaw_map_entity(
 
 	new_component.insert(entity_transform.clone());
 
+
 	new_component.insert(
 		NeedsTemplate {
 			template: entity.template.clone(),
 			map_enitity: entity.clone()
 		}
 	);
+
+	if let Some(true) = entity.npc{
+		new_component.insert(NPC);
+	}
+
+	if let Some(move_cycle) = &entity.move_cycle {
+		let mut cycle = MoveCycle::default();
+
+		for target in move_cycle {
+			cycle.targets.push(
+				Point {
+					x: target[0] as i32,
+					y: target[1] as i32,
+					z: target[2] as i32,
+				}
+			);
+		}
+
+		log::info!("move cycle {:?}", cycle);
+
+		new_component.insert(cycle);
+	}
 
 	if let Some(true) = entity.player {
 		let player_id = player_ids.provide_player_id(&entity.entity_id);
@@ -253,6 +279,7 @@ fn spawn_shape(
 					..Default::default()
 				}
 			);
+
 		},
 		MapShapeType::Plane(plane) => {
 			log::info!("spawning plane {:?}", plane);

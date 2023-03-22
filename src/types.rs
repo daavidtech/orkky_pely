@@ -207,6 +207,43 @@ pub struct NewMapChanges {
 #[derive(Component)]
 pub struct Fps;
 
+
+#[derive(Clone, Component, Default)]
+pub struct TargetPosition {
+	pub x: f32,
+	pub z: f32
+}
+	
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct Point {
+	pub x: i32,
+	pub z: i32,
+	pub y: i32,
+}
+
+pub struct NavigationMeshComponent {
+	pub left_up: Point,
+	pub right_down: Point,
+	pub right_up: Point,
+	pub left_down: Point,
+}
+
+#[derive(Clone, Component, Default)]
+pub struct NPC;
+
+#[derive(Clone, Component, Default, Debug)]
+pub struct MoveCycle {
+	pub current: usize,
+	pub targets: Vec<Point>
+}
+
+impl MoveCycle {
+	pub fn get_next(&mut self) -> Point {
+		let next = self.targets[self.current].clone();
+		self.current = (self.current + 1) % self.targets.len();
+		next
+	}
+}
 #[derive(Clone, Component, Default)]
 pub struct Attacking {
 	pub timer: Timer,
