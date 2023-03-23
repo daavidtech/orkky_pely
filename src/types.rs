@@ -248,3 +248,42 @@ impl MoveCycle {
 pub struct Attacking {
 	pub timer: Timer,
 }
+
+
+
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Tower {
+    pub shooting_timer: Timer,
+    pub bullet_offset: Vec3,
+}
+
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Bullet {
+    pub direction: Vec3,
+    pub speed: f32,
+}
+
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Lifetime {
+    pub timer: Timer,
+}
+
+#[derive(Resource)]
+pub struct GameAssets {
+    pub bullet_scene: Handle<Scene>,
+}
+
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Target {
+    pub speed: f32,
+}
+
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Health {
+    pub value: i32,
+}

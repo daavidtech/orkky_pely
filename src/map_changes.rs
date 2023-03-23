@@ -21,6 +21,7 @@ use crate::types::MoveCycle;
 use crate::types::EntityScene;
 use crate::types::GameEntity;
 use crate::types::GltfRegister;
+use crate::types::Health;
 use crate::types::MapTemplates;
 use crate::types::NPC;
 use crate::types::NeedsAsset;
@@ -29,6 +30,9 @@ use crate::types::NeedsTemplate;
 use crate::types::PlayerCamera;
 use crate::types::PlayerIds;
 use crate::types::Point;
+use crate::types::StartAnimation;
+use crate::types::Target;
+use crate::types::Tower;
 use crate::types::UnloadedGltfAsset;
 use crate::types::You;
 
@@ -154,6 +158,9 @@ fn spaw_map_entity(
 	};
 
 	new_component.insert(entity_transform.clone());
+	
+
+
 
 
 	new_component.insert(
@@ -165,6 +172,11 @@ fn spaw_map_entity(
 
 	if let Some(true) = entity.npc{
 		new_component.insert(NPC);
+		new_component.insert(Tower {
+			shooting_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+			bullet_offset: Vec3::new(0.0, 0.2, 0.5),
+		});
+	
 	}
 
 	if let Some(move_cycle) = &entity.move_cycle {
@@ -188,7 +200,13 @@ fn spaw_map_entity(
 	if let Some(true) = entity.player {
 		let player_id = player_ids.provide_player_id(&entity.entity_id);
 
-		log::info!("[{}] entity is player {}", entity.entity_id, player_id);		
+		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
+		new_component.insert(Target { speed: 0.0 });
+	    new_component.insert(Health { value: 3 });	
+		
+		
+
+
 
 		new_component.insert((
 			You,

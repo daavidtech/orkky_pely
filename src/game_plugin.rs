@@ -9,9 +9,11 @@ use crate::animations::handle_stop_animation;
 use crate::animations::detect_animation_players;
 use crate::animations::link_animation_players;
 use crate::attack::handle_attack;
+use crate::bullet::BulletPlugin;
 use crate::collisions::add_collisions;
 use crate::collisions::move_melee_hitbox;
 use crate::console_plugin::ConsolePlugin;
+use crate::death::TargetPlugin;
 use crate::despawn::despawn_screen;
 use crate::game_ui_plugin;
 use crate::gltf::unpack_gltf;
@@ -21,7 +23,12 @@ use crate::map_changes::*;
 use crate::npc::NpcPlugin;
 use crate::npc::handle_cycle;
 use crate::player_control::*;
+use crate::throw::TowerPlugin;
 use crate::types::*;
+
+
+
+
 
 pub struct GamePlugin;
 
@@ -33,6 +40,9 @@ impl Plugin for GamePlugin {
 			.add_plugin(GameUiPlugin::default())
 			.add_plugin(ConsolePlugin::default())
 			.add_plugin(NpcPlugin)
+			.add_plugin(TowerPlugin)
+			.add_plugin(TargetPlugin)
+			.add_plugin(BulletPlugin)
 			.insert_resource(RapierConfiguration::default())
 			.insert_resource(MapTemplates::default())
 			.insert_resource(GltfRegister::default())

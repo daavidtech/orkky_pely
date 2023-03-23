@@ -1,7 +1,6 @@
-
+use bevy::{prelude::*, utils::FloatOrd};
 use bevy::DefaultPlugins;
 use bevy::log::LogPlugin;
-use bevy::prelude::*;
 use bevy_inspector_egui::WorldInspectorPlugin;
 use cursor::initial_grab_cursor;
 use game_plugin::GamePlugin;
@@ -10,6 +9,7 @@ use map_loader::create_map_loader;
 use menu_plugin::MenuPlugin;
 use splash_plugin::SplashPlugin;
 use types::GameState;
+use crate::types::*;
 
 mod game_ui_plugin;
 mod gltf;
@@ -33,6 +33,9 @@ mod math;
 mod path_finding;
 mod console_plugin;
 mod attack;
+mod death;
+mod bullet;
+mod throw;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -48,7 +51,9 @@ fn main() {
 			level: bevy::log::Level::INFO,
 			..Default::default()
 		}))
+		
 		.add_startup_system(initial_grab_cursor)
+		.add_startup_system(asset_loading)
 		.add_state(GameState::Game)	
 		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
@@ -56,3 +61,10 @@ fn main() {
 		.add_plugin(WorldInspectorPlugin::new())
 		.run();
 }
+fn asset_loading(mut commands: Commands, assets: Res<AssetServer>) {
+    commands.insert_resource(GameAssets {
+        bullet_scene: assets.load("Bullet.glb#Scene0"),
+    });
+}
+
+
