@@ -1,4 +1,7 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::RigidBody;
+use bevy_rapier3d::prelude::Velocity;
 
 use crate::*;
 
@@ -33,22 +36,21 @@ fn tower_shooting(
                 .map(|closest_target| closest_target.translation() - bullet_spawn);
 
             if let Some(direction) = direction {
-                commands.entity(tower_ent).with_children(|commands| {
-                    commands
-                        .spawn(SceneBundle {
-                            scene: bullet_assets.bullet_scene.clone(),
-                            transform: Transform::from_translation(tower.bullet_offset),
-                            ..Default::default()
-                        })
-                        .insert(Lifetime {
-                            timer: Timer::from_seconds(1000.5, TimerMode::Once),
-                        })
-                        .insert(Bullet {
-                            direction,
-                            speed: 1.5,
-                        });
-                       
-                });
+				commands
+					.spawn(SceneBundle {
+						scene: bullet_assets.bullet_scene.clone(),
+						transform: Transform::from_translation(transform.translation()),
+						..Default::default()
+					})
+					.insert(Lifetime {
+						timer: Timer::from_seconds(1000.5, TimerMode::Once),
+					})
+					.insert(Collider::ball(0.1))
+					.insert(RigidBody::Dynamic)
+					.insert(Velocity {
+						linvel: direction.normalize() * 50.0,
+						..Default::default()
+					});
             }
         }
     }
