@@ -101,6 +101,7 @@ pub struct GameEntity {
 	pub pitch: f32,
 	pub npc: bool,
 	pub attacking: bool,
+	pub running: bool,
 }
 
 impl GameEntity {

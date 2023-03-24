@@ -82,8 +82,6 @@ pub fn handle_mouse_input(
 pub fn move_game_entity(
 	mut query: Query<(&mut Transform, &GameEntity)>,
 	console: Res<Console>,
-	mut last_x: Local<f32>,
-	mut last_y: Local<f32>,
 ) {
 	if console.active {
 		return;
@@ -141,18 +139,13 @@ pub fn move_game_entity(
 				game_entity.yaw
 			);
 
-			// if *last_x != x {
-			// 	log::info!("x: {}", x);
-			// 	*last_x = x;
-			// }
+			let speed = match game_entity.running {
+				true => 0.3,
+				false => 0.1,
+			};
 
-			// if *last_y != y {
-			// 	log::info!("y: {}", y);
-			// 	*last_y = y;
-			// }
-
-			transform.translation.x += x * 0.1;
-			transform.translation.z += y * 0.1;
+			transform.translation.x += x * speed;
+			transform.translation.z += y * speed;
 		}
 	}
 }

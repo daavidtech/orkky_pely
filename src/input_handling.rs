@@ -36,6 +36,9 @@ pub fn keyboard_handler(
 			KeyCode::D => {
 				game_entity.move_intent.move_rightward = true;
 			},
+			KeyCode::LShift => {
+				game_entity.running = true;
+			},
 			_ => {}
 		}
 	}
@@ -53,6 +56,9 @@ pub fn keyboard_handler(
 			},
 			KeyCode::D => {
 				game_entity.move_intent.move_rightward = false;
+			},
+			KeyCode::LShift => {
+				game_entity.running = false;
 			},
 			_ => {}
 		}
