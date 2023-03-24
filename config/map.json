@@ -52,7 +52,8 @@
 		{
 			"name": "Castle",
 			"asset": "castle.glb",
-			"collider": "AABB"
+			"collider": "AABB",
+			"automatic_collision_mesh": true
 		},
 		{
 			"name": "Box",
