@@ -203,20 +203,9 @@ fn spaw_map_entity(
 		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
 		new_component.insert(Target { speed: 0.0 });
 	    new_component.insert(Health { value: 3 });	
-		
-		
-
-
 
 		new_component.insert((
 			You,
-			KinematicCharacterController {
-				snap_to_ground: Some(
-					CharacterLength::Absolute(0.5)
-				),
-				..Default::default()
-			},
-			Collider::ball(0.5)
 		));
 	}
 }
