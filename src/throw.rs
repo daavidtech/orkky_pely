@@ -43,7 +43,7 @@ fn tower_shooting(
 						..Default::default()
 					})
 					.insert(Lifetime {
-						timer: Timer::from_seconds(1000.5, TimerMode::Once),
+						timer: Timer::from_seconds(30.0, TimerMode::Once),
 					})
 					.insert(Collider::ball(0.1))
 					.insert(RigidBody::Dynamic)
