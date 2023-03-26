@@ -58,7 +58,7 @@ fn main() {
 		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)
-		.add_plugin(WorldInspectorPlugin::new())
+		// .add_plugin(WorldInspectorPlugin::new())
 		.run();
 }
 fn asset_loading(mut commands: Commands, assets: Res<AssetServer>) {

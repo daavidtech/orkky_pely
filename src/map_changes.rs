@@ -87,7 +87,8 @@ fn handle_map_template(
 
 					entity_commands.insert((
 						Restitution::coefficient(0.0),
-						Collider::cuboid(*x, *y, *z)
+						Collider::cuboid(*x, *y, *z),
+						Ccd::enabled()
 					));
 				},
 				_ => {}
@@ -106,7 +107,15 @@ fn handle_map_template(
 					entity_commands.insert(RigidBody::Fixed);
 				},
 				MapEntityPhysics::Kinematic => {
-					entity_commands.insert(RigidBody::KinematicVelocityBased);
+					entity_commands.insert(RigidBody::KinematicVelocityBased)
+						.insert(KinematicCharacterController {
+							// Don’t allow climbing slopes larger than 45 degrees.
+							max_slope_climb_angle: 45.0_f32.to_radians(),
+							// Automatically slide down on slopes smaller than 30 degrees.
+							min_slope_slide_angle: 30.0_f32.to_radians(),
+							snap_to_ground: Some(CharacterLength::Absolute(0.5)),
+							..default()
+						});
 				},
 			}
 		},
@@ -158,10 +167,6 @@ fn spaw_map_entity(
 	};
 
 	new_component.insert(entity_transform.clone());
-	
-
-
-
 
 	new_component.insert(
 		NeedsTemplate {
@@ -173,7 +178,7 @@ fn spaw_map_entity(
 	if let Some(true) = entity.npc{
 		new_component.insert(NPC);
 		new_component.insert(Tower {
-			shooting_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+			shooting_timer: Timer::from_seconds(0.4, TimerMode::Repeating),
 			bullet_offset: Vec3::new(0.0, 0.2, 0.5),
 		});
 	

@@ -82,6 +82,7 @@ pub fn handle_mouse_input(
 pub fn move_game_entity(
 	mut query: Query<(&mut Transform, &GameEntity)>,
 	console: Res<Console>,
+	time: Res<Time>,
 ) {
 	if console.active {
 		return;
@@ -139,9 +140,9 @@ pub fn move_game_entity(
 				game_entity.yaw
 			);
 
-			let speed = match game_entity.running {
-				true => 0.3,
-				false => 0.1,
+			let speed = time.delta_seconds() * match game_entity.running {
+				true => 70.0,
+				false => 20.0,
 			};
 
 			transform.translation.x += x * speed;

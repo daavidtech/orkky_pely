@@ -36,7 +36,7 @@ impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app
 			.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-			.add_plugin(RapierDebugRenderPlugin::default())
+			//.add_plugin(RapierDebugRenderPlugin::default())
 			.add_plugin(GameUiPlugin::default())
 			.add_plugin(ConsolePlugin::default())
 			.add_plugin(NpcPlugin)
