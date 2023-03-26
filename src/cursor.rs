@@ -16,7 +16,7 @@ pub fn toggle_grab_cursor(window: &mut Window) {
     }
 }
 
-pub fn initial_grab_cursor(mut windows: ResMut<Windows>) {
+pub fn initial_grab_cursor(mut windows: ResMut<Window>) {
     if let Some(window) = windows.get_primary_mut() {
         toggle_grab_cursor(window);
     } else {
