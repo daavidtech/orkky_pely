@@ -12,6 +12,7 @@ use crate::attack::handle_attack;
 use crate::bullet::BulletPlugin;
 use crate::collisions::add_collisions;
 use crate::collisions::move_melee_hitbox;
+use crate::collisions::meleehitbox_damage;
 use crate::console_plugin::ConsolePlugin;
 use crate::death::TargetPlugin;
 use crate::despawn::despawn_screen;
@@ -68,6 +69,7 @@ impl Plugin for GamePlugin {
 					.with_system(mouse_handlers)
 					.with_system(move_melee_hitbox)
 					.with_system(handle_mouse_input)
+		         	.with_system(meleehitbox_damage)
 					.with_system(move_game_entity)
 					.with_system(display_events)
 					.with_system(handle_cycle)

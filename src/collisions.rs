@@ -7,7 +7,9 @@ use bevy::utils::HashMap;
 use bevy_rapier3d::prelude::*;
 
 use crate::types::AddCollidingMesh;
+use crate::types::Health;
 use crate::types::MeleeHitbox;
+use crate::types::Target;
 
 pub fn add_collisions(
 	assets_gltf: Res<Assets<Gltf>>,
@@ -127,7 +129,7 @@ pub fn move_melee_hitbox(
 			entity_commands.with_children(|parent| {
 				parent.spawn(
 					(
-						Collider::cuboid(0.5, 0.5, hitbox.radius / 2.0),
+						Collider::cuboid(0.5, 0.5, hitbox.radius / 2.5),
 						ColliderMassProperties::Density(12.0),
 						TransformBundle::from_transform(
 							Transform {
@@ -156,4 +158,20 @@ pub fn move_melee_hitbox(
 
 		transform.rotation = Quat::from_rotation_y((90.0 + new_angle).to_radians());
 	}
+}
+
+
+pub fn meleehitbox_damage(
+    
+    Hitboxs: Query<(Entity, &GlobalTransform), With<MeleeHitbox>>,
+    mut targets: Query<(&mut Health, &Transform), With<Target>>,
+) {
+    for (Hitbox, Hitbox_transform) in &Hitboxs {
+        for (mut health, target_transform) in &mut targets {
+            if Vec3::distance(Hitbox_transform.translation(), target_transform.translation) < 0.2 {           
+                health.value -= 1;
+                break;
+            }
+        }
+    }
 }

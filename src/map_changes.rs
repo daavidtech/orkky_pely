@@ -172,6 +172,7 @@ fn spaw_map_entity(
 
 	if let Some(true) = entity.npc{
 		new_component.insert(NPC);
+		new_component.insert(Health { value: 3 });	
 		new_component.insert(Tower {
 			shooting_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
 			bullet_offset: Vec3::new(0.0, 0.2, 0.5),
@@ -203,10 +204,11 @@ fn spaw_map_entity(
 		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
 		new_component.insert(Target { speed: 0.0 });
 	    new_component.insert(Health { value: 3 });	
-
 		new_component.insert((
 			You,
 		));
+
+		
 	}
 }
 
