@@ -31,6 +31,12 @@ pub fn add_collisions(
 
 		let mut entity_commands = commands.entity(entity);
 
+		let named_meshes = &pack.named_meshes;
+		let landscape = match named_meshes.get("Landscape") {
+			Some(mesh) => mesh,
+			None => continue,
+		};
+
 		for node in &pack.nodes {
 			let node = match assets_gltf_nodes.get(node) {
 				Some(n) => n,
@@ -43,6 +49,10 @@ pub fn add_collisions(
 				Some(mesh) => mesh,
 				None => continue,
 			};
+
+			if landscape.id() != mesh.id() {
+				continue;
+			}
 
 			let mesh = match assets_gltf_mesh.get(mesh) {
 				Some(m) => m,

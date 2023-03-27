@@ -52,7 +52,8 @@
 		{
 			"name": "Castle",
 			"asset": "castle.glb",
-			"collider": "AABB"
+			"collider": "AABB",
+			"automatic_collision_mesh": true
 		},
 		{
 			"name": "Box",
@@ -136,15 +137,15 @@
 				}
 			},
 			"physics": "Dynamic"
+		},
+		{
+			"name": "map",
+			"asset": "map.glb",
+			"physics": "Static",
+			"automatic_collision_mesh": true
 		}
 	],
-	"entities": [
-		{
-			"template": "Castle",
-			"initial_position": [0, 0, 0],
-			"initial_rotation": [0, 0, 0]
-		},
-		
+	"entities": [		
 		{
 			"template": "Troll",
 			"entity_id": "troll",
@@ -192,6 +193,9 @@
 				[5, 1, 2],
 				[10, 1, 25]
 			]
+		},
+		{
+			"template": "map"
 		}
 	],
 	"lights": [
@@ -208,20 +212,7 @@
 		"color": "ffffff",
 		"brightness": 1.0
 	},
-	"shapes": [
-		{
-			"shape": {
-				"type": "Box",
-				"min_x": -100.0,
-				"max_x": 100.0,
-				"min_y": -0.25,
-				"max_y": 0.25,
-				"min_z": -100.0,
-				"max_z": 101.0,
-				"collider": true
-			}
-		}
-	],
+	"shapes": [],
 	"camera": {
 		"entity_id": "troll",
 		"camera_type": "ThirdPerson"
