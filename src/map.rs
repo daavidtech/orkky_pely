@@ -82,6 +82,7 @@ pub struct MapTemplate {
 	pub run_speed: Option<f32>,
 	pub collider: Option<MapEntityCollider>,
 	pub mass: Option<f32>,
+	pub friction: Option<f32>,
 	pub physics: Option<MapEntityPhysics>,
 	pub automatic_collision_mesh: Option<bool>,
 	#[serde(default)]

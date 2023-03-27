@@ -83,6 +83,7 @@
 			"third_person_camera_location": [0, 2.1, 14],
 			"play_controllable": true,
 			"physics": "Dynamic",
+			"friction": 100,
 			"collider": {
 				"Cuboid": {
 					"x": 1.0,

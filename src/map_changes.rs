@@ -126,6 +126,15 @@ fn handle_map_template(
 	if let Some(mass) = template.mass {
 		entity_commands.insert(AdditionalMassProperties::Mass(mass));
 	}
+
+	if let Some(friction) = template.friction {
+		log::info!("[{}] setting friction to {}", entity.entity_id, friction);
+
+		entity_commands.insert(Friction {
+			coefficient: friction,
+			combine_rule: CoefficientCombineRule::Max,
+		});
+	}
 }
 
 fn spaw_map_entity(
