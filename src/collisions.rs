@@ -7,6 +7,7 @@ use bevy::utils::HashMap;
 use bevy_rapier3d::prelude::*;
 
 use crate::types::AddCollidingMesh;
+use crate::types::BulletProperties;
 use crate::types::Health;
 use crate::types::MeleeHitbox;
 use crate::types::Target;
@@ -148,6 +149,9 @@ pub fn move_melee_hitbox(
 							},
 						),
 						ActiveEvents::COLLISION_EVENTS,
+						BulletProperties {
+							damage: 69.0,
+						}
 					)
 				);
 			});

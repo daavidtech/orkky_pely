@@ -71,7 +71,7 @@ impl Plugin for GamePlugin {
 					.with_system(handle_mouse_input)
 		         	.with_system(meleehitbox_damage)
 					.with_system(move_game_entity)
-					.with_system(display_events)
+					.with_system(game_entity_bullet_contact)
 					.with_system(handle_cycle)
 					.with_system(ensure_animation)
 					.with_system(handle_attack)
@@ -99,10 +99,10 @@ pub fn setup(
 	}
 }
 
-fn display_events(
+fn game_entity_bullet_contact(
     mut collision_events: EventReader<CollisionEvent>,
     mut contact_force_events: EventReader<ContactForceEvent>,
-	melee_hitboxes: Query<(Entity, &MeleeHitbox)>,
+	bullets: Query<(Entity, &BulletProperties)>,
 	game_entities: Query<&GameEntity>,
 	template_map: Res<MapTemplates>,
 	parents: Query<&Parent>,
@@ -113,12 +113,7 @@ fn display_events(
         // println!("Received collision event: {:?}", collision_event);
 		match collision_event {
 			CollisionEvent::Started(a, b, c) => {
-				let parent = match parents.get(a.clone()) {
-					Ok(p) => p,
-					Err(_) => continue,
-				};
-
-				let m = match melee_hitboxes.get(parent.get()) {
+				let m = match bullets.get(*a) {
 					Ok((_, m)) => m,
 					Err(_) => continue,
 				};

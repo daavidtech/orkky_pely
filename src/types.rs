@@ -153,6 +153,10 @@ pub struct MeleeHitbox {
 	pub end_angle: f32,
 }
 
+#[derive(Clone, Component, Debug)]
+pub struct BulletProperties {
+	pub damage: f32,
+}
 
 pub struct MoveToLocation {
 	
