@@ -175,17 +175,17 @@ pub fn move_melee_hitbox(
 }
 
 
-pub fn meleehitbox_damage(
+// pub fn meleehitbox_damage(
     
-    Hitboxs: Query<(Entity, &GlobalTransform), With<MeleeHitbox>>,
-    mut targets: Query<(&mut Health, &Transform), With<Target>>,
-) {
-    for (Hitbox, Hitbox_transform) in &Hitboxs {
-        for (mut health, target_transform) in &mut targets {
-            if Vec3::distance(Hitbox_transform.translation(), target_transform.translation) < 0.2 {           
-                health.value -= 1;
-                break;
-            }
-        }
-    }
-}
+//     Hitboxs: Query<(Entity, &GlobalTransform), With<MeleeHitbox>>,
+//     mut targets: Query<(&mut Health, &Transform), With<Target>>,
+// ) {
+//     for (Hitbox, Hitbox_transform) in &Hitboxs {
+//         for (mut health, target_transform) in &mut targets {
+//             if Vec3::distance(Hitbox_transform.translation(), target_transform.translation) < 0.2 {           
+//                 health.value -= 1;
+//                 break;
+//             }
+//         }
+//     }
+// }

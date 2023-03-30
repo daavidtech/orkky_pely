@@ -45,7 +45,8 @@ pub struct MapEntity {
 	pub scale: Option<f32>,
 	pub player: Option<bool>,
 	pub npc: Option<bool>,
-	pub move_cycle: Option<Vec<[f32; 3]>>
+	pub move_cycle: Option<Vec<[f32; 3]>>,
+	pub max_health: Option<f32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

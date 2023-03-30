@@ -86,9 +86,8 @@ fn handle_map_template(
 					let half_z = *z / 2.0;
 
 					entity_commands.insert((
-						Restitution::coefficient(0.0),
 						Collider::cuboid(*x, *y, *z),
-						Ccd::enabled()
+						// Ccd::enabled()
 					));
 				},
 				_ => {}
@@ -149,6 +148,8 @@ fn spaw_map_entity(
 		npc: entity.npc.unwrap_or(false),
 		entity_id: entity.entity_id.clone(),
 		template: entity.template.clone(),
+		max_health: entity.max_health.unwrap_or(100.0),
+		curr_health: entity.max_health.unwrap_or(100.0),
 		..Default::default()
 	};
 
@@ -156,7 +157,8 @@ fn spaw_map_entity(
 		SpatialBundle {
 			..Default::default()
 		},
-		game_entity
+		game_entity,
+		Name::new(format!("{}:{}", entity.entity_id, entity.template)),
 	));
 
 	let scale = match entity.scale {
@@ -188,7 +190,7 @@ fn spaw_map_entity(
 		new_component.insert(NPC);
 		new_component.insert(Health { value: 3 });	
 		new_component.insert(Tower {
-			shooting_timer: Timer::from_seconds(0.4, TimerMode::Repeating),
+			shooting_timer: Timer::from_seconds(0.3, TimerMode::Repeating),
 			bullet_offset: Vec3::new(0.0, 0.2, 0.5),
 		});
 	
@@ -217,7 +219,7 @@ fn spaw_map_entity(
 
 		log::info!("[{}] entity is player {}", entity.entity_id, player_id);
 		new_component.insert(Target { speed: 0.0 });
-	    new_component.insert(Health { value: 3 });	
+	    // new_component.insert(Health { value: 3 });	
 		new_component.insert((
 			You,
 		));
@@ -355,7 +357,7 @@ fn spawn_shape(
 			);
 		},
 		MapShapeType::Box(box_shape) => {
-			let mut entity_commands = commands.spawn(
+			let mut entity_commands = commands.spawn((
 				PbrBundle {
 					mesh: meshes.add(Mesh::from(shape::Box {
 						min_x: box_shape.min_x,
@@ -371,8 +373,9 @@ fn spawn_shape(
 						..default()
 					}),
 					..Default::default()
-				}
-			);
+				},
+				Name::new(format!("box:{}", shape.id),
+			)));
 
 			if let Some(true) = box_shape.collider {
 				let hx = (box_shape.max_x - box_shape.min_x) / 2.0;

@@ -29,8 +29,42 @@
 				}
 			},
 			"initial_transform": [0, -1.0, 0],
-			"mass": 5,
-			"death_sound_effect": "wilhelm_scream.ogg"
+			"mass": 5
+		},
+		{
+			"name": "Troll",
+			"asset": "troll.glb",
+			"iddle_animation": "idle",
+			"walk_animation": "walk",
+			"run_animation": "walk",
+			"jump_animation": "jump",
+			"initial_transform": [0, -2.0, 0],
+			"initial_rotation_y": 180,
+			"third_person_camera_location": [0, 2.1, 14],
+			"play_controllable": true,
+			"physics": "Dynamic",
+			"friction": 100,
+			"collider": {
+				"Cuboid": {
+					"x": 1.0,
+					"y": 2.3,
+					"z": 1.0
+				}
+			},
+			"weapons": [
+				{
+					"weapon_type": "Melee",
+					"animation": "hit",
+					"hitbox": {
+						"box": {
+
+						},
+						"Rotating": {
+
+						}
+					}
+				}
+			]
 		},
 		{
 			"name": "Crossbow",
@@ -70,41 +104,6 @@
 		{
 			"name": "Tree",
 			"asset": "tree.glb"
-		},
-		{
-			"name": "Troll",
-			"asset": "troll.glb",
-			"iddle_animation": "idle",
-			"walk_animation": "walk",
-			"run_animation": "walk",
-			"jump_animation": "jump",
-			"initial_transform": [0, -2.0, 0],
-			"initial_rotation_y": 180,
-			"third_person_camera_location": [0, 2.1, 14],
-			"play_controllable": true,
-			"physics": "Dynamic",
-			"friction": 100,
-			"collider": {
-				"Cuboid": {
-					"x": 1.0,
-					"y": 2.3,
-					"z": 1.0
-				}
-			},
-			"weapons": [
-				{
-					"weapon_type": "Melee",
-					"animation": "hit",
-					"hitbox": {
-						"box": {
-
-						},
-						"Rotating": {
-
-						}
-					}
-				}
-			]
 		},
 		{
 			"name": "troll_cave",
@@ -194,9 +193,6 @@
 				[5, 1, 2],
 				[10, 1, 25]
 			]
-		},
-		{
-			"template": "map"
 		}
 	],
 	"lights": [
@@ -213,7 +209,20 @@
 		"color": "ffffff",
 		"brightness": 1.0
 	},
-	"shapes": [],
+	"shapes": [
+		{
+			"shape": {
+				"type": "Box",
+				"min_x": -30,
+				"min_z": -30,
+				"max_x": 30,
+				"max_z": 30,
+				"min_y": -1,
+				"max_y": 0,
+				"collider": true
+			}
+		}
+	],
 	"camera": {
 		"entity_id": "troll",
 		"camera_type": "ThirdPerson"

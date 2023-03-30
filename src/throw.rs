@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::ActiveEvents;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::Velocity;
@@ -47,6 +48,11 @@ fn tower_shooting(
 					})
 					.insert(Collider::ball(0.1))
 					.insert(RigidBody::Dynamic)
+					.insert(BulletProperties {
+						damage: 1.0,
+					})
+					.insert(Name::new("Bullet"))
+					.insert(ActiveEvents::COLLISION_EVENTS)
 					.insert(Velocity {
 						linvel: direction.normalize() * 50.0,
 						..Default::default()

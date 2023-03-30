@@ -12,7 +12,6 @@ use crate::attack::handle_attack;
 use crate::bullet::BulletPlugin;
 use crate::collisions::add_collisions;
 use crate::collisions::move_melee_hitbox;
-use crate::collisions::meleehitbox_damage;
 use crate::console_plugin::ConsolePlugin;
 use crate::death::TargetPlugin;
 use crate::despawn::despawn_screen;
@@ -37,7 +36,7 @@ impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app
 			.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-			//.add_plugin(RapierDebugRenderPlugin::default())
+			.add_plugin(RapierDebugRenderPlugin::default())
 			.add_plugin(GameUiPlugin::default())
 			.add_plugin(ConsolePlugin::default())
 			.add_plugin(NpcPlugin)
@@ -69,7 +68,7 @@ impl Plugin for GamePlugin {
 					.with_system(mouse_handlers)
 					.with_system(move_melee_hitbox)
 					.with_system(handle_mouse_input)
-		         	.with_system(meleehitbox_damage)
+		         	//.with_system(meleehitbox_damage)
 					.with_system(move_game_entity)
 					.with_system(game_entity_bullet_contact)
 					.with_system(handle_cycle)
@@ -100,40 +99,85 @@ pub fn setup(
 }
 
 fn game_entity_bullet_contact(
+	mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
     mut contact_force_events: EventReader<ContactForceEvent>,
+	names: Query<&Name>,
 	bullets: Query<(Entity, &BulletProperties)>,
-	game_entities: Query<&GameEntity>,
+	mut game_entities: Query<(Entity, &mut GameEntity)>,
 	template_map: Res<MapTemplates>,
 	parents: Query<&Parent>,
 	asset_server: Res<AssetServer>,
-	audio: Res<Audio>
+	audio: Res<Audio>,
+	mut game_state: ResMut<State<GameState>>,
 ) {
     for collision_event in collision_events.iter() {
         // println!("Received collision event: {:?}", collision_event);
 		match collision_event {
 			CollisionEvent::Started(a, b, c) => {
-				let m = match bullets.get(*a) {
-					Ok((_, m)) => m,
-					Err(_) => continue,
+				if a == b {
+					log::info!("collision between same entities");
+					continue;
+				}
+
+				match (names.get(*a), names.get(*b)) {
+					(Ok(a_name), Ok(b_name)) => {
+						log::info!("collision between {} and {}", a_name.as_str(), b_name.as_str());
+					},
+					(Ok(a_name), Err(_)) => {
+						log::info!("collision between {} and unknown", a_name.as_str());
+					},
+					(Err(_), Ok(b_name)) => {
+						log::info!("collision between unknown and {}", b_name.as_str());
+					},
+					_ => {},
+				};
+				
+				let (bullent_entity, bullet) = match bullets.get(*a) {
+					Ok(b) => b,
+					Err(_) => match bullets.get(*b) {
+						Ok(b) => b,
+						Err(_) => continue,
+					},
 				};
 
-				let game_entity = match game_entities.get(b.clone()) {
+				let (game_entity_entity, mut game_entity) = match game_entities.get_mut(*a) {
 					Ok(g) => g,
-					Err(_) => continue,
-				};
+					Err(_) => match game_entities.get_mut(*b) {
+						Ok(g) => g,
+						Err(_) => continue,
+					},
+				};	
+
+				log::info!("game entity found");
 
 				let template = match template_map.templates.get(&game_entity.template) {
 					Some(t) => t,
 					None => continue,
 				};
 
-				println!("Melee hitbox {:?} hit {:?}", m, b);
-
-				if let Some(sound_effect) = &template.death_sound_effect {
-					let music = asset_server.load(sound_effect);
-					audio.play(music);
+				if template.name != "Troll" {
+					continue;
 				}
+
+				log::info!("bullet {:?} hit {}", bullet, template.name);
+
+				// if let Some(sound_effect) = &template.death_sound_effect {
+				// 	let music = asset_server.load(sound_effect);
+				// 	audio.play(music);
+				// }
+
+				game_entity.curr_health -= bullet.damage;
+				
+				if game_entity.curr_health <= 0.0 {
+					log::info!("game entity dead");
+					commands.entity(game_entity_entity).despawn_recursive();
+					game_state.set(GameState::Menu).unwrap();
+				}
+
+				let mut bullent_entity_command = commands.entity(bullent_entity);
+
+				bullent_entity_command.remove::<BulletProperties>();
 			},
 			CollisionEvent::Stopped(_, _, _) => {},
 		}
