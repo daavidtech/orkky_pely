@@ -168,6 +168,7 @@ pub enum GameState {
     Splash,
     Menu,
     Game,
+	GameOver
 }
 
 

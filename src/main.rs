@@ -3,6 +3,7 @@ use bevy::DefaultPlugins;
 use bevy::log::LogPlugin;
 use bevy_inspector_egui::WorldInspectorPlugin;
 use cursor::initial_grab_cursor;
+use game_over::GameOverPlugin;
 use game_plugin::GamePlugin;
 use keymap::Keymap;
 use map_loader::create_map_loader;
@@ -36,6 +37,7 @@ mod attack;
 mod death;
 mod bullet;
 mod throw;
+mod game_over;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -58,6 +60,7 @@ fn main() {
 		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)
+		.add_plugin(GameOverPlugin)
 		// .add_plugin(WorldInspectorPlugin::new())
 		.run();
 }

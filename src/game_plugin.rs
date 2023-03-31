@@ -172,7 +172,7 @@ fn game_entity_bullet_contact(
 				if game_entity.curr_health <= 0.0 {
 					log::info!("game entity dead");
 					commands.entity(game_entity_entity).despawn_recursive();
-					game_state.set(GameState::Menu).unwrap();
+					game_state.set(GameState::GameOver).unwrap();
 				}
 
 				let mut bullent_entity_command = commands.entity(bullent_entity);

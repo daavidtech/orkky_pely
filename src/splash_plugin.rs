@@ -53,7 +53,7 @@ fn splash_setup(
 				// This will center the logo
 				margin: UiRect::all(Val::Auto),
 				// This will set the logo to be 200px wide, and auto adjust its height
-				size: Size::new(Val::Px(2000.0), Val::Auto),
+				size: Size::new(Val::Px(200.0), Val::Auto),
 				..default()
 			},
 			image: UiImage(icon),
