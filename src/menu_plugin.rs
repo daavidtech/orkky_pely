@@ -1,4 +1,3 @@
-
 use bevy::{app::AppExit, prelude::*};
 
 use crate::{types::{DisplayQuality, Volume, GameState}, TEXT_COLOR, despawn::despawn_screen};
@@ -15,65 +14,39 @@ impl Plugin for MenuPlugin {
 			// At start, the menu is not enabled. This will be changed in `menu_setup` when
 			// entering the `GameState::Menu` state.
 			// Current screen in the menu is handled by an independent state from `GameState`
-			.add_state(MenuState::Disabled)
-			.add_system_set(SystemSet::on_enter(GameState::Menu).with_system(menu_setup))
-			// Systems to handle the main menu screen
-			.add_system_set(SystemSet::on_enter(MenuState::Main).with_system(main_menu_setup))
-			.add_system_set(
-				SystemSet::on_exit(MenuState::Main)
-					.with_system(despawn_screen::<OnMainMenuScreen>),
-			)
-			// Systems to handle the settings menu screen
-			.add_system_set(
-				SystemSet::on_enter(MenuState::Settings).with_system(settings_menu_setup),
-			)
-			.add_system_set(
-				SystemSet::on_exit(MenuState::Settings)
-					.with_system(despawn_screen::<OnSettingsMenuScreen>),
-			)
-			// Systems to handle the display settings screen
-			.add_system_set(
-				SystemSet::on_enter(MenuState::SettingsDisplay)
-					.with_system(display_settings_menu_setup),
-			)
-			.add_system_set(
-				SystemSet::on_update(MenuState::SettingsDisplay)
-					.with_system(setting_button::<DisplayQuality>),
-			)
-			.add_system_set(
-				SystemSet::on_exit(MenuState::SettingsDisplay)
-					.with_system(despawn_screen::<OnDisplaySettingsMenuScreen>),
-			)
-			// Systems to handle the sound settings screen
-			.add_system_set(
-				SystemSet::on_enter(MenuState::SettingsSound)
-					.with_system(sound_settings_menu_setup),
-			)
-			.add_system_set(
-				SystemSet::on_update(MenuState::SettingsSound)
-					.with_system(setting_button::<Volume>),
-			)
-			.add_system_set(
-				SystemSet::on_exit(MenuState::SettingsSound)
-					.with_system(despawn_screen::<OnSoundSettingsMenuScreen>),
-			)
-			// Common systems to all screens that handles buttons behaviour
-			.add_system_set(
-				SystemSet::on_update(GameState::Menu)
-					.with_system(menu_action)
-					.with_system(button_system),
-			);
+			.add_state::<MenuState>()
+			.add_system(menu_setup.in_schedule(OnEnter(GameState::Menu)))
+			.add_system(display_settings_menu_setup.in_schedule(OnEnter(MenuState::SettingsDisplay)))
+			.add_system(sound_settings_menu_setup.in_schedule(OnEnter(MenuState::SettingsSound)))
+			.add_system(main_menu_setup.in_schedule(OnEnter(MenuState::Main)))
+			.add_system(settings_menu_setup.in_schedule(OnEnter(MenuState::Settings)))
+			.add_system(despawn_screen::<OnMainMenuScreen>.in_schedule(OnExit(MenuState::Main)))
+			.add_system(despawn_screen::<OnSettingsMenuScreen>.in_schedule(OnExit(MenuState::Settings)))
+			.add_system(despawn_screen::<OnDisplaySettingsMenuScreen>.in_schedule(OnExit(MenuState::SettingsDisplay)))
+			.add_system(despawn_screen::<OnSoundSettingsMenuScreen>.in_schedule(OnExit(MenuState::SettingsSound)))
+			.add_system(setting_button::<DisplayQuality>.in_set(OnUpdate(MenuState::SettingsDisplay)))
+			.add_system(setting_button::<Volume>.in_set(OnUpdate(MenuState::SettingsSound)))
+			.add_systems((
+				menu_action,
+				button_system,
+			).in_set(OnUpdate(GameState::Menu)));
 	}
 }
 
 // State used for the current menu screen
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash, States)]
 enum MenuState {
 	Main,
 	Settings,
 	SettingsDisplay,
 	SettingsSound,
 	Disabled,
+}
+
+impl Default for MenuState {
+	fn default() -> Self {
+		Self::Disabled
+	}
 }
 
 // Tag component used to tag entities added on the main menu screen
@@ -150,7 +123,7 @@ fn setting_button<T: Resource + Component + PartialEq + Copy>(
 }
 
 fn menu_setup(
-	mut menu_state: ResMut<State<MenuState>>,
+	mut menu_state: ResMut<NextState<MenuState>>,
 	mut commands: Commands,
 ) {
 	let _ = menu_state.set(MenuState::Main);
@@ -235,7 +208,10 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 					let icon = asset_server.load("right.png");
 					parent.spawn(ImageBundle {
 						style: button_icon_style.clone(),
-						image: UiImage(icon),
+						image: UiImage {
+							texture: icon,
+							..default()
+						},
 						..default()
 					});
 					parent.spawn(TextBundle::from_section(
@@ -256,7 +232,10 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 					let icon = asset_server.load("wrench.png");
 					parent.spawn(ImageBundle {
 						style: button_icon_style.clone(),
-						image: UiImage(icon),
+						image: UiImage {
+							texture: icon,
+							..default()
+						},
 						..default()
 					});
 					parent.spawn(TextBundle::from_section(
@@ -277,7 +256,10 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 					let icon = asset_server.load("exitRight.png");
 					parent.spawn(ImageBundle {
 						style: button_icon_style,
-						image: UiImage(icon),
+						image: UiImage {
+							texture: icon,
+							..default()
+						},
 						..default()
 					});
 					parent.spawn(TextBundle::from_section("Quit", button_text_style));
@@ -510,27 +492,27 @@ fn menu_action(
 		(Changed<Interaction>, With<Button>),
 	>,
 	mut app_exit_events: EventWriter<AppExit>,
-	mut menu_state: ResMut<State<MenuState>>,
-	mut game_state: ResMut<State<GameState>>,
+	mut menu_state: ResMut<NextState<MenuState>>,
+	mut game_state: ResMut<NextState<GameState>>,
 ) {
 	for (interaction, menu_button_action) in &interaction_query {
 		if *interaction == Interaction::Clicked {
 			match menu_button_action {
 				MenuButtonAction::Quit => app_exit_events.send(AppExit),
 				MenuButtonAction::Play => {
-					game_state.set(GameState::Game).unwrap();
-					menu_state.set(MenuState::Disabled).unwrap();
+					game_state.set(GameState::Game);
+					menu_state.set(MenuState::Disabled);
 				}
-				MenuButtonAction::Settings => menu_state.set(MenuState::Settings).unwrap(),
+				MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
 				MenuButtonAction::SettingsDisplay => {
-					menu_state.set(MenuState::SettingsDisplay).unwrap();
+					menu_state.set(MenuState::SettingsDisplay);
 				}
 				MenuButtonAction::SettingsSound => {
-					menu_state.set(MenuState::SettingsSound).unwrap();
+					menu_state.set(MenuState::SettingsSound);
 				}
-				MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main).unwrap(),
+				MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main),
 				MenuButtonAction::BackToSettings => {
-					menu_state.set(MenuState::Settings).unwrap();
+					menu_state.set(MenuState::Settings);
 				}
 			}
 		}

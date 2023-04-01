@@ -1,7 +1,8 @@
 use bevy::{prelude::*, utils::FloatOrd};
 use bevy::DefaultPlugins;
 use bevy::log::LogPlugin;
-use bevy_inspector_egui::WorldInspectorPlugin;
+use bevy::prelude::*;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use cursor::initial_grab_cursor;
 use game_over::GameOverPlugin;
 use game_plugin::GamePlugin;
@@ -55,8 +56,7 @@ fn main() {
 		}))
 		
 		.add_startup_system(initial_grab_cursor)
-		.add_startup_system(asset_loading)
-		.add_state(GameState::Game)	
+		.add_state::<GameState>()	
 		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)

@@ -163,7 +163,7 @@ pub struct MoveToLocation {
 }
 
 // Enum that will be used as a global state for the game
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash, States)]
 pub enum GameState {
     Splash,
     Menu,
@@ -171,6 +171,11 @@ pub enum GameState {
 	GameOver
 }
 
+impl Default for GameState {
+	fn default() -> Self {
+		GameState::Splash
+	}
+}
 
 // One of the two settings that can be set through the menu. It will be a resource in the app
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
