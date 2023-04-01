@@ -98,7 +98,7 @@ fn game_entity_bullet_contact(
 	parents: Query<&Parent>,
 	asset_server: Res<AssetServer>,
 	audio: Res<Audio>,
-	mut game_state: ResMut<State<GameState>>,
+	mut game_state: ResMut<NextState<GameState>>,
 ) {
     for collision_event in collision_events.iter() {
         // println!("Received collision event: {:?}", collision_event);
@@ -161,7 +161,7 @@ fn game_entity_bullet_contact(
 				if game_entity.curr_health <= 0.0 {
 					log::info!("game entity dead");
 					commands.entity(game_entity_entity).despawn_recursive();
-					game_state.set(GameState::GameOver).unwrap();
+					game_state.set(GameState::GameOver);
 				}
 
 				let mut bullent_entity_command = commands.entity(bullent_entity);
