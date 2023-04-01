@@ -285,7 +285,10 @@ fn spawn_shape(
 			log::info!("spawning plane {:?}", plane);
 			
 			let mut plane_bundle = PbrBundle {
-				mesh: meshes.add(Mesh::from(shape::Plane { size: plane.size })),
+				mesh: meshes.add(Mesh::from(shape::Plane { 
+					size: plane.size,
+					..Default::default() 
+				})),
 				material: materials.add(
 					StandardMaterial {
 						base_color: Color::rgb(0.3, 0.5, 0.3),

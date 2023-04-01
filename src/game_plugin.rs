@@ -38,35 +38,25 @@ impl Plugin for GamePlugin {
 			.insert_resource(GltfRegister::default())
 			.insert_resource(AssetPacks::default())
 			.insert_resource(PlayerIds::default())
-			.add_system_set(
-				SystemSet::on_enter(GameState::Game)
-					.with_system(setup)			
-			)
-			.add_system_set(
-				SystemSet::on_update(GameState::Game)
-					.with_system(handle_start_animation)
-					.with_system(handle_stop_animation)
-					.with_system(detect_animation_players)
-					.with_system(link_animation_players)
-					.with_system(handle_map_changes)
-					.with_system(handle_needs_template)
-					.with_system(unpack_gltf)
-					.with_system(give_assets)
-					.with_system(give_camera)
-					.with_system(add_collisions)
-					.with_system(keyboard_handler)
-					.with_system(mouse_handlers)
-					.with_system(move_melee_hitbox)
-					.with_system(handle_mouse_input)
-					.with_system(move_game_entity)
-					.with_system(display_events)
-					.with_system(handle_cycle)
-					.with_system(ensure_animation)
-					.with_system(handle_attack)
-			)
-			.add_system_set(
-				SystemSet::on_exit(GameState::Game).with_system(despawn_screen::<OnGameScreen>),
-			);
+			.add_system(setup.in_schedule(OnEnter(GameState::Game)))
+			.add_systems((
+				handle_map_changes,
+				handle_needs_template,
+				unpack_gltf,
+				give_assets,
+				give_camera,
+				add_collisions,
+				keyboard_handler,
+				mouse_handlers,
+				move_melee_hitbox,
+				handle_mouse_input,
+				move_game_entity,
+				display_events,
+				handle_cycle,
+				ensure_animation,
+				handle_attack,
+			).in_set(OnUpdate(GameState::Game)))
+			.add_system(despawn_screen::<OnGameScreen>.in_schedule(OnExit(GameState::Game)));
 	}
 }
 
