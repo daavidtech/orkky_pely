@@ -61,6 +61,7 @@ fn main() {
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)
 		.add_plugin(GameOverPlugin)
+		.add_startup_system(asset_loading)
 		// .add_plugin(WorldInspectorPlugin::new())
 		.run();
 }

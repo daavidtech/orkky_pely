@@ -66,6 +66,12 @@ impl Plugin for GamePlugin {
 				ensure_animation,
 				handle_attack,
 			).in_set(OnUpdate(GameState::Game)))
+			.add_systems((
+				handle_start_animation,
+				handle_stop_animation,
+				detect_animation_players,
+				link_animation_players,
+			).in_set(OnUpdate(GameState::Game)))
 			.add_system(despawn_screen::<OnGameScreen>.in_schedule(OnExit(GameState::Game)));
 	}
 }
