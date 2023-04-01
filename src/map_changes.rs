@@ -86,8 +86,7 @@ fn handle_map_template(
 					let half_z = *z / 2.0;
 
 					entity_commands.insert((
-						Collider::cuboid(*x, *y, *z),
-						// Ccd::enabled()
+						Collider::cuboid(*x, *y, *z)
 					));
 				},
 				_ => {}
@@ -222,6 +221,7 @@ fn spaw_map_entity(
 	    // new_component.insert(Health { value: 3 });	
 		new_component.insert((
 			You,
+			Ccd::enabled()
 		));
 
 		
