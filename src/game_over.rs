@@ -1,4 +1,5 @@
 use crate::*;
+use crate::despawn::despawn_screen;
 
 pub struct GameOverPlugin;
 
@@ -9,8 +10,13 @@ impl Plugin for GameOverPlugin{
     fn build(&self, app: &mut App){
     app
     .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(clean_screen))
-    .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(game_over));
-    
+    .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(game_over))
+	.add_system_set(SystemSet::on_update(GameState::GameOver).with_system(back_menu))
+    .add_system_set(
+		SystemSet::on_exit(GameState::GameOver)
+			.with_system(clean_screen)
+			.with_system(despawn_screen::<GameOver,>),
+	);
 }
 } 
 
@@ -19,7 +25,7 @@ all: Query<Entity>,
 mut commands: Commands){
     for entity in &all{
         commands.entity(entity).despawn()
-
+   
     }
 
 }
@@ -46,6 +52,16 @@ mut asset_server: Res<AssetServer>){
 		GameOver,
 	));
 
+}
+
+
+fn back_menu(
+	mut game_state: ResMut<State<GameState>>,
+	keyboard: Res<Input<KeyCode>>
+){
+	if keyboard.just_pressed(KeyCode::Return){
+		game_state.set(GameState::Menu).unwrap();
+	}
 }
 
 
