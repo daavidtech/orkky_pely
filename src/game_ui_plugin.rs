@@ -17,19 +17,20 @@ pub struct GameUiPlugin;
 impl Plugin for GameUiPlugin {
 	fn build(&self, app: &mut App) {app   
         .add_plugin(FrameTimeDiagnosticsPlugin::default())     
-        .add_system_set(
-            SystemSet::on_enter(GameState::Game)
-                .with_system(setup_fps_ui)
-                .with_system(setup_health_ui)
+        .add_systems((
+			setup_fps_ui,
+			setup_health_ui
+		).in_schedule(OnEnter(GameState::Game)))
+		.add_systems((
+			update_health, 
+			fps_display_system
+		).in_set(OnUpdate(GameState::Game)));
 
-                
-        )
-
-        .add_system_set(
-            SystemSet::on_update(GameState::Game)
-			.with_system(update_health)
-            .with_system(fps_display_system)
-        );
+        // .add_system_set(
+        //     SystemSet::on_update(GameState::Game)
+		// 	.with_system(update_health)
+        //     .with_system(fps_display_system)
+        // );
     
 
     }

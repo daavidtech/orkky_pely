@@ -8,16 +8,17 @@ struct GameOver;
 
 impl Plugin for GameOverPlugin{
     fn build(&self, app: &mut App){
-    app
-    .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(clean_screen))
-    .add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(game_over))
-	.add_system_set(SystemSet::on_update(GameState::GameOver).with_system(back_menu))
-    .add_system_set(
-		SystemSet::on_exit(GameState::GameOver)
-			.with_system(clean_screen)
-			.with_system(despawn_screen::<GameOver,>),
-	);
-}
+    	app
+			.add_systems((
+				clean_screen,
+				game_over
+			).in_schedule(OnEnter(GameState::GameOver)))
+			.add_system(back_menu.in_set(OnUpdate(GameState::GameOver)))
+			.add_systems((
+				clean_screen,
+				despawn_screen::<GameOver,>
+			).in_schedule(OnExit(GameState::GameOver)));
+	}
 } 
 
 fn clean_screen(
@@ -46,7 +47,10 @@ asset_server: Res<AssetServer>){
 				size: Size::new(Val::Px(1500.0), Val::Auto),
 				..default()
 			},
-			image: UiImage(icon),
+			image: UiImage{
+				texture: icon,
+				..default()
+			},
 			..default()
 		},
 		GameOver,
@@ -56,11 +60,11 @@ asset_server: Res<AssetServer>){
 
 
 fn back_menu(
-	mut game_state: ResMut<State<GameState>>,
+	mut game_state: ResMut<NextState<GameState>>,
 	keyboard: Res<Input<KeyCode>>
 ){
 	if keyboard.just_pressed(KeyCode::Return){
-		game_state.set(GameState::Menu).unwrap();
+		game_state.set(GameState::Menu);
 	}
 }
 
