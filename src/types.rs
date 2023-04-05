@@ -293,3 +293,7 @@ pub struct Target {
 pub struct Health {
     pub value: i32,
 }
+#[derive(Resource, Default)]
+pub struct Menu{
+	pub active: bool
+}

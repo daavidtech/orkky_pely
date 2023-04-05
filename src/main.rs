@@ -38,6 +38,7 @@ mod death;
 mod bullet;
 mod throw;
 mod game_over;
+mod ingame_menu;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -56,12 +57,12 @@ fn main() {
 		
 		.add_startup_system(initial_grab_cursor)
 		.add_startup_system(asset_loading)
-		.add_state(GameState::Game)	
+		.add_state(GameState::Splash)	
 		.add_plugin(SplashPlugin)
         .add_plugin(MenuPlugin)
 		.add_plugin(GamePlugin)
 		.add_plugin(GameOverPlugin)
-		// .add_plugin(WorldInspectorPlugin::new())
+		.add_plugin(WorldInspectorPlugin::new())
 		.run();
 }
 fn asset_loading(mut commands: Commands, assets: Res<AssetServer>) {

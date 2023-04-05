@@ -32,7 +32,7 @@ mut commands: Commands){
 
 
 fn game_over(mut commands: Commands,
-mut asset_server: Res<AssetServer>){
+asset_server: Res<AssetServer>){
     
     let icon = asset_server.load("gameover.png");
 

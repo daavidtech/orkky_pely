@@ -17,6 +17,8 @@ use crate::death::TargetPlugin;
 use crate::despawn::despawn_screen;
 use crate::game_ui_plugin;
 use crate::gltf::unpack_gltf;
+
+use crate::ingame_menu::GameMenuPlugin;
 use crate::input_handling::keyboard_handler;
 use crate::input_handling::mouse_handlers;
 use crate::map_changes::*;
@@ -39,6 +41,7 @@ impl Plugin for GamePlugin {
 			.add_plugin(RapierDebugRenderPlugin::default())
 			.add_plugin(GameUiPlugin::default())
 			.add_plugin(ConsolePlugin::default())
+			.add_plugin(GameMenuPlugin::default())
 			.add_plugin(NpcPlugin)
 			.add_plugin(TowerPlugin)
 			.add_plugin(TargetPlugin)

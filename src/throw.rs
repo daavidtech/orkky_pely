@@ -49,7 +49,7 @@ fn tower_shooting(
 					.insert(Collider::ball(0.1))
 					.insert(RigidBody::Dynamic)
 					.insert(BulletProperties {
-						damage: 20.0,
+						damage: 1.0,
 					})
 					.insert(Name::new("Bullet"))
 					.insert(ActiveEvents::COLLISION_EVENTS)

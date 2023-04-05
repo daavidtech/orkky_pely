@@ -97,7 +97,7 @@ fn setup_health_ui(mut commands: Commands) {
             border: UiRect::all(Val::Px(20.0)),
             ..Default::default()
         },
-        background_color: Color::rgb(0.65, 0.65, 0.65).into(),
+        background_color: Color::rgb(1.0, 1.0, 1.0).into(),
         ..Default::default()      
     });
 	
