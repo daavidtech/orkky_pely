@@ -1,3 +1,4 @@
+use bevy::app::AppExit;
 use bevy::prelude::*;
 use bevy::prelude::KeyCode;
 use bevy::prelude::NodeBundle;
@@ -31,10 +32,6 @@ struct SelectedOption;
 enum MenuButtonAction {
 	Play,
 	Settings,
-	SettingsDisplay,
-	SettingsSound,
-	BackToMainMenu,
-	BackToSettings,
 	Quit,
 }
 
@@ -61,7 +58,8 @@ impl Plugin for GameMenuPlugin {
 		app
 			.insert_resource(Menu::default())
 			.add_system(toggle_exitmenu)
-		    .add_system(button_system);
+		    .add_system(button_system)
+		    .add_system(menu_action);
 			
 	}
 }
@@ -164,7 +162,10 @@ fn toggle_exitmenu(
 								let icon = asset_server.load("right.png");
 								parent.spawn(ImageBundle {
 									style: button_icon_style.clone(),
-									image: UiImage(icon),
+									image: UiImage {
+										texture: icon,
+										..default()
+									},
 									..default()
 								});
 								parent.spawn(TextBundle::from_section(
@@ -185,7 +186,10 @@ fn toggle_exitmenu(
 								let icon = asset_server.load("wrench.png");
 								parent.spawn(ImageBundle {
 									style: button_icon_style.clone(),
-									image: UiImage(icon),
+									image: UiImage {
+										texture: icon,
+										..default()
+									},
 									..default()
 								});
 								parent.spawn(TextBundle::from_section(
@@ -206,7 +210,10 @@ fn toggle_exitmenu(
 								let icon = asset_server.load("exitRight.png");
 								parent.spawn(ImageBundle {
 									style: button_icon_style,
-									image: UiImage(icon),
+									image: UiImage {
+										texture: icon,
+										..default()
+									},
 									..default()
 								});
 								parent.spawn(TextBundle::from_section("Quit", button_text_style));
@@ -219,4 +226,26 @@ fn toggle_exitmenu(
         }
     }
 	
+}
+
+
+fn menu_action(
+	interaction_query: Query<
+		(&Interaction, &MenuButtonAction),
+		(Changed<Interaction>, With<Button>),
+	>,
+	mut app_exit_events: EventWriter<AppExit>,
+	
+	
+) {
+	for (interaction, menu_button_action) in &interaction_query {
+		if *interaction == Interaction::Clicked {
+			match menu_button_action {
+				MenuButtonAction::Quit => app_exit_events.send(AppExit),
+                MenuButtonAction::Play => app_exit_events.send(AppExit),
+                MenuButtonAction::Settings => app_exit_events.send(AppExit),
+			
+			}
+		}
+	}
 }

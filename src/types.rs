@@ -300,5 +300,5 @@ pub struct Health {
 }
 #[derive(Resource, Default)]
 pub struct Menu{
-	pub active: bool
+	pub active: bool,
 }

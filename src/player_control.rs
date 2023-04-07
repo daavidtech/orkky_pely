@@ -9,9 +9,11 @@ use crate::math::rotate_vec;
 use crate::types::GameEntity;
 use crate::types::PlayerCamera;
 use crate::types::You;
+use crate::types::Menu;
 
 pub fn handle_mouse_input(
 	mut mouse_events: EventReader<MouseMotion>,
+	menu: Res<Menu>,
 	console: Res<Console>,
 	mut set: ParamSet<(
 		Query<(&mut Transform, &mut GameEntity, &You)>,
@@ -21,6 +23,10 @@ pub fn handle_mouse_input(
 	mut pitch_changed: Local<f32>,
 ) {
 	if console.active {
+		return;
+	}
+	
+	if menu.active{
 		return;
 	}
 
