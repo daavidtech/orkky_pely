@@ -7,6 +7,7 @@ use cursor::initial_grab_cursor;
 use game_over::GameOverPlugin;
 use game_plugin::GamePlugin;
 use keymap::Keymap;
+use map::Map;
 use map_loader::create_map_loader;
 use menu_plugin::MenuPlugin;
 use splash_plugin::SplashPlugin;
@@ -21,7 +22,7 @@ mod types;
 mod player;
 mod map;
 mod map_loader;
-mod map_changes;
+mod map_spawner;
 mod collisions;
 mod keymap;
 mod input_handling;
@@ -45,12 +46,12 @@ const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
 fn main() {
 	let keymap = Keymap::load("./config/keymap.json");
-
-	let changes_receiver = create_map_loader("./config/map.json");
+	
+	let map = Map::load("./config/map.json").unwrap();
 
     App::new()
-		.insert_resource(changes_receiver)
 		.insert_resource(keymap)
+		.insert_resource(map)
 		.add_plugins(DefaultPlugins.set(LogPlugin {
 			level: bevy::log::Level::INFO,
 			..Default::default()

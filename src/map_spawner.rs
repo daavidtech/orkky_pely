@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::map::CameraType;
 use crate::map::Light;
+use crate::map::Map;
 use crate::map::MapEntityPhysics;
 use crate::map::LightType;
 use crate::map::MapEntityCollider;
@@ -230,6 +231,7 @@ fn spaw_map_entity(
 
 pub fn handle_needs_template(
 	mut commands: Commands,
+	map: Res<Map>,
 	template_map: Res<MapTemplates>,
 	mut query: Query<(Entity, &NeedsTemplate, &mut GameEntity)>,
 ) {
@@ -249,15 +251,15 @@ pub fn handle_needs_template(
 
 fn spawn_light(
 	commands: &mut Commands,
-	light: Light
+	light: &Light
 ) {
-	match light.light_type {
+	match &light.light_type {
 		LightType::Point(point) => {
 			log::info!("Spawning point light: {:?}", point);
 
 			let mut light_bundle = PointLightBundle {
 				point_light: PointLight {
-					color: Color::hex(point.color).unwrap(),
+					color: Color::hex(&point.color).unwrap(),
 					..Default::default()
 				},
 				..Default::default()
@@ -292,11 +294,11 @@ fn spawn_shape(
 	commands: &mut Commands,
 	meshes: &mut ResMut<Assets<Mesh>>,
 	materials: &mut ResMut<Assets<StandardMaterial>>,
-	shape: MapShape
+	shape: &MapShape
 ) {
 	log::info!("spawning shape: {:?}", shape);
 
-	match shape.shape {
+	match &shape.shape {
 		MapShapeType::Cube(cube) => {
 			commands.spawn(
 				PbrBundle {
@@ -396,104 +398,104 @@ fn spawn_shape(
 	}
 }
 
-pub fn handle_map_changes(
-	mut commands: Commands,
-	changes_receiver: Res<MapChangesReceiver>,
-	mut map_templates: ResMut<MapTemplates>, 
-	mut gltf_register: ResMut<GltfRegister>,
-	mut done: Local<bool>,
-	asset_server: Res<AssetServer>,
-	mut meshes: ResMut<Assets<Mesh>>,
-	mut materials: ResMut<Assets<StandardMaterial>>,
-	mut player_ids: ResMut<PlayerIds>,
-) {
-	// if *done {
-	// 	return;
-	// }
+// pub fn handle_map_changes(
+// 	mut commands: Commands,
+// 	changes_receiver: Res<MapChangesReceiver>,
+// 	mut map_templates: ResMut<MapTemplates>, 
+// 	mut gltf_register: ResMut<GltfRegister>,
+// 	mut done: Local<bool>,
+// 	asset_server: Res<AssetServer>,
+// 	mut meshes: ResMut<Assets<Mesh>>,
+// 	mut materials: ResMut<Assets<StandardMaterial>>,
+// 	mut player_ids: ResMut<PlayerIds>,
+// ) {
+// 	// if *done {
+// 	// 	return;
+// 	// }
 
-	let changes_receiver = changes_receiver.rx.lock().unwrap();
+// 	let changes_receiver = changes_receiver.rx.lock().unwrap();
 
-	loop {
-		match changes_receiver.try_recv() {
-			Ok(change) => {
-				log::info!("mapchange {:?}", change);
+// 	loop {
+// 		match changes_receiver.try_recv() {
+// 			Ok(change) => {
+// 				log::info!("mapchange {:?}", change);
 
-				match change {
-					MapChange::NewMapEntity(entity) => {
-						spaw_map_entity(
-							&mut commands, 
-							&entity,
-							&mut player_ids
-						);
-					},
-        			MapChange::NewMapTemplate(template) => {
-						match &template.asset {
-							Some(asset_path) => {
-								let asset: Handle<Gltf> = asset_server.load(asset_path);
+// 				match change {
+// 					MapChange::NewMapEntity(entity) => {
+// 						spaw_map_entity(
+// 							&mut commands, 
+// 							&entity,
+// 							&mut player_ids
+// 						);
+// 					},
+//         			MapChange::NewMapTemplate(template) => {
+// 						match &template.asset {
+// 							Some(asset_path) => {
+// 								let asset: Handle<Gltf> = asset_server.load(asset_path);
 
-								let unloaded_asset = UnloadedGltfAsset {
-									asset: asset_path.clone(),
-									gltf: asset
-								};
+// 								let unloaded_asset = UnloadedGltfAsset {
+// 									asset: asset_path.clone(),
+// 									gltf: asset
+// 								};
 
-								gltf_register.unloaded.push(unloaded_asset);
-							},
-							None => todo!(),
-						}
+// 								gltf_register.unloaded.push(unloaded_asset);
+// 							},
+// 							None => todo!(),
+// 						}
 
-						map_templates.templates.insert(template.name.clone(), template);
-					},
-					MapChange::NewMapShape(shape) => {
-						spawn_shape(&mut commands, &mut meshes, &mut materials, shape);
-					},
-					MapChange::NewLight(ligth) => {
-						spawn_light(&mut commands, ligth);
-					},
-					MapChange::NewAmbientLight(args) => {
-						commands.insert_resource(AmbientLight {
-							brightness: args.brightness,
-							color: Color::hex(args.color).unwrap(),
-						});
-					},
-        			MapChange::NewCamera(map_camera) => {
-						commands.spawn(
-							NeedsCamera {
-								entity_id: map_camera.entity_id,
-								camera_type: map_camera.camera_type
-							}
-						);
-					},
-					MapChange::UpdateMapEntity(_) => {},
-					MapChange::RemoveMapEntity(_) => {},
-					MapChange::UpdateMaptemplate(_) => {},
-					MapChange::RemoveMapTemplate(_) => {},
-					MapChange::UpdateLight(_) => {},
-					MapChange::UpdateAmbientLight(_) => {},
-					MapChange::UpdateMapShape(_) => {},
-					MapChange::RemoveMapShape(_) => {},
-					MapChange::RemoveLight(_) => {},
-					MapChange::RemoveAmbientLight => {},
-					MapChange::UpdateCamera(_) => {},
-					MapChange::RemoveCamera => {},			
-				}
-			},
-			Err(err) => {
-				match err {
-					mpsc::TryRecvError::Empty => {
-						break;
-					},
-					mpsc::TryRecvError::Disconnected => {
-						log::info!("changes disconnected");
+// 						map_templates.templates.insert(template.name.clone(), template);
+// 					},
+// 					MapChange::NewMapShape(shape) => {
+// 						spawn_shape(&mut commands, &mut meshes, &mut materials, shape);
+// 					},
+// 					MapChange::NewLight(ligth) => {
+// 						spawn_light(&mut commands, ligth);
+// 					},
+// 					MapChange::NewAmbientLight(args) => {
+// 						commands.insert_resource(AmbientLight {
+// 							brightness: args.brightness,
+// 							color: Color::hex(args.color).unwrap(),
+// 						});
+// 					},
+//         			MapChange::NewCamera(map_camera) => {
+// 						commands.spawn(
+// 							NeedsCamera {
+// 								entity_id: map_camera.entity_id,
+// 								camera_type: map_camera.camera_type
+// 							}
+// 						);
+// 					},
+// 					MapChange::UpdateMapEntity(_) => {},
+// 					MapChange::RemoveMapEntity(_) => {},
+// 					MapChange::UpdateMaptemplate(_) => {},
+// 					MapChange::RemoveMapTemplate(_) => {},
+// 					MapChange::UpdateLight(_) => {},
+// 					MapChange::UpdateAmbientLight(_) => {},
+// 					MapChange::UpdateMapShape(_) => {},
+// 					MapChange::RemoveMapShape(_) => {},
+// 					MapChange::RemoveLight(_) => {},
+// 					MapChange::RemoveAmbientLight => {},
+// 					MapChange::UpdateCamera(_) => {},
+// 					MapChange::RemoveCamera => {},			
+// 				}
+// 			},
+// 			Err(err) => {
+// 				match err {
+// 					mpsc::TryRecvError::Empty => {
+// 						break;
+// 					},
+// 					mpsc::TryRecvError::Disconnected => {
+// 						log::info!("changes disconnected");
 	
-						*done = true;
+// 						*done = true;
 	
-						return;
-					},
-				}
-			}
-		};
-	}
-}
+// 						return;
+// 					},
+// 				}
+// 			}
+// 		};
+// 	}
+// }
 
 pub fn give_camera(
 	mut commands: Commands,
@@ -585,7 +587,7 @@ pub fn give_camera(
 pub fn give_assets(
 	mut commands: Commands,
 	query: Query<(Entity, &GameEntity, &NeedsAsset)>,
-	asset_packs: Res<AssetPacks>
+	asset_packs: Res<AssetPacks>,
 ) {
 	for (entity, game_entity, needs_asset) in query.iter() {
 		match asset_packs.asset_packs.get(&needs_asset.asset) {
@@ -648,6 +650,79 @@ pub fn give_assets(
 			None => {
 				log::info!("[{}] no asset {:?}", game_entity.entity_id, needs_asset.asset);
 			}
+		}
+	}
+}
+
+pub fn spawn_map_entites(
+	mut commands: Commands,
+	mut player_ids: ResMut<PlayerIds>,
+	map: Res<Map>,
+	mut gltf_register: ResMut<GltfRegister>,
+	mut map_templates: ResMut<MapTemplates>,
+	asset_server: Res<AssetServer>,
+	mut meshes: ResMut<Assets<Mesh>>,
+	mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+	if let Some(entities) = map.entities.as_ref() {
+		for entity in entities.iter() {
+			log::info!("spawn map entity");
+
+			spaw_map_entity(&mut commands, entity, &mut player_ids);
+		}
+	}
+
+	if let Some(templates) = map.templates.as_ref() {
+		for template in templates.iter() {
+			log::info!("spawn map template");
+
+			match &template.asset {
+				Some(asset_path) => {
+					let asset: Handle<Gltf> = asset_server.load(asset_path);
+
+					let unloaded_asset = UnloadedGltfAsset {
+						asset: asset_path.clone(),
+						gltf: asset
+					};
+
+					gltf_register.unloaded.push(unloaded_asset);
+				},
+				None => todo!(),
+			}
+
+			map_templates.templates.insert(template.name.clone(), template.clone());
+		}
+	}
+	
+	if let Some(lights) = map.lights.as_ref() {
+		for light in lights.iter() {
+			log::info!("spawn map light");
+
+			spawn_light(&mut commands, light);
+		}
+	}
+
+	if let Some(ambied_light) = map.ambient_light.as_ref() {
+		log::info!("spawn map ambient light");
+
+		commands.insert_resource(AmbientLight {
+			brightness: ambied_light.brightness,
+			color: Color::hex(&ambied_light.color).unwrap(),
+		});
+	}
+
+	if let Some(camera) = &map.camera {
+		commands.spawn(
+			NeedsCamera {
+				entity_id: camera.entity_id.clone(),
+				camera_type: camera.camera_type.clone()
+			}
+		);
+	}
+
+	if let Some(shape) = &map.shapes {
+		for shape in shape.iter() {
+			spawn_shape(&mut commands, &mut meshes, &mut materials, shape);
 		}
 	}
 }

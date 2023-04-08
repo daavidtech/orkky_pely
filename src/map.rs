@@ -184,7 +184,7 @@ pub struct MapCamera {
 	pub entity_id: String
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, Resource)]
 pub struct Map {
 	pub entities: Option<Vec<MapEntity>>,
 	pub templates: Option<Vec<MapTemplate>>,

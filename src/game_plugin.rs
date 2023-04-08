@@ -21,7 +21,7 @@ use crate::gltf::unpack_gltf;
 use crate::ingame_menu::GameMenuPlugin;
 use crate::input_handling::keyboard_handler;
 use crate::input_handling::mouse_handlers;
-use crate::map_changes::*;
+use crate::map_spawner::*;
 use crate::npc::NpcPlugin;
 use crate::npc::handle_cycle;
 use crate::player_control::*;
@@ -53,7 +53,6 @@ impl Plugin for GamePlugin {
 			.insert_resource(PlayerIds::default())
 			.add_system(setup.in_schedule(OnEnter(GameState::Game)))
 			.add_systems((
-				handle_map_changes,
 				handle_needs_template,
 				unpack_gltf,
 				give_assets,
@@ -69,6 +68,7 @@ impl Plugin for GamePlugin {
 				ensure_animation,
 				handle_attack,
 			).in_set(OnUpdate(GameState::Game)))
+			.add_system(spawn_map_entites.in_schedule(OnEnter(GameState::Game)))
 			.add_systems((
 				handle_start_animation,
 				handle_stop_animation,
