@@ -22,7 +22,7 @@ impl Plugin for GameOverPlugin{
 } 
 
 fn clean_screen(
-all: Query<Entity>,
+all: Query<Entity, Without<Window> >,
 mut commands: Commands){
     for entity in &all{
         commands.entity(entity).despawn()
@@ -44,7 +44,7 @@ asset_server: Res<AssetServer>){
 				
 				margin: UiRect::all(Val::Auto),
 				
-				size: Size::new(Val::Px(1500.0), Val::Auto),
+				size: Size::new(Val::Px(1400.0), Val::Auto),
 				..default()
 			},
 			image: UiImage{

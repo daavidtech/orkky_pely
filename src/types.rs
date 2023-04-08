@@ -173,7 +173,7 @@ pub enum GameState {
 
 impl Default for GameState {
 	fn default() -> Self {
-		GameState::Splash
+		GameState::Game
 	}
 }
 
