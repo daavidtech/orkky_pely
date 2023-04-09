@@ -1,10 +1,13 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::ActiveEvents;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Velocity;
+use bevy::utils::FloatOrd;
+use bevy_rapier3d::prelude::*;
 
 use crate::*;
+use crate::types::BulletProperties;
+use crate::types::GameAssets;
+use crate::types::Lifetime;
+use crate::types::Target;
+use crate::types::Tower;
 
 
 

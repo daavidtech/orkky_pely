@@ -1,4 +1,5 @@
-use crate::*;
+use crate::types::Bullet;
+use crate::types::Lifetime;
 use bevy::prelude::*;
 
 

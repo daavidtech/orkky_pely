@@ -197,7 +197,11 @@ pub struct Map {
 impl Map {
 	pub fn load(path: &str) -> anyhow::Result<Map> {
 		let map = std::fs::read_to_string(path)?;
-		let map: Map = serde_json::from_str(&map)?;
+		Map::parse(&map)
+	}
+
+	pub fn parse(json_str: &str) -> anyhow::Result<Map> {
+		let map: Map = serde_json::from_str(&json_str)?;
 		Ok(map)
 	}
 }

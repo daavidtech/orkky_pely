@@ -3,8 +3,7 @@ use bevy::prelude::*;
 use bevy::prelude::KeyCode;
 use bevy::prelude::NodeBundle;
 
-
-use crate::TEXT_COLOR;
+use crate::constants::TEXT_COLOR;
 use crate::types::Menu;
 
 

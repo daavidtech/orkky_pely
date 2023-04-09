@@ -1,0 +1,41 @@
+name: Rust
+
+# on:
+#   push:
+#     branches: [ "trunk" ]
+#   pull_request:
+#     branches: [ "trunk" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y alsa-tools librust-alsa-sys-dev libudev-dev
+        cargo install wasm-pack
+    - name: Build
+      run: wasm-pack build --target web
+    - name: Install SSH key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Copy index html file
+      run: cp ./www/index.html ./pkg
+    - name: Upload files via SFTP
+      uses: SamKirkland/FTP-Deploy-Action@4.1.2
+      with:
+        server: $REMOTE_HOST
+        username: $REMOTE_USER
+        password: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        serverDir: $REMOTE_PATH
+        localDir: ./pkg
+        args: -r -v --exclude ".git/**"

@@ -3,6 +3,7 @@ use bevy::prelude::*;
 
 use crate::types::AssetPack;
 use crate::types::AssetPacks;
+use crate::types::GameAssets;
 use crate::types::GltfRegister;
 
 pub fn unpack_gltf(
@@ -47,4 +48,10 @@ pub fn unpack_gltf(
 
 		true
 	});
+}
+
+pub fn asset_loading(mut commands: Commands, assets: Res<AssetServer>) {
+    commands.insert_resource(GameAssets {
+        bullet_scene: assets.load("Bullet.glb#Scene0"),
+    });
 }

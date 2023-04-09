@@ -1,6 +1,8 @@
 use bevy::{app::AppExit, prelude::*};
 
-use crate::{types::{DisplayQuality, Volume, GameState}, TEXT_COLOR, despawn::despawn_screen};
+use crate::{types::{DisplayQuality, Volume, GameState}, despawn::despawn_screen, constants::TEXT_COLOR};
+
+
 
 // This plugin manages the menu, with 5 different screens:
 // - a main menu with "New Game", "Settings", "Quit"

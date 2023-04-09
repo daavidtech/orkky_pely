@@ -1,3 +1,4 @@
+use app::run_app;
 use bevy::{prelude::*, utils::FloatOrd};
 use bevy::DefaultPlugins;
 use bevy::log::LogPlugin;
@@ -41,36 +42,15 @@ mod bullet;
 mod throw;
 mod game_over;
 mod ingame_menu;
-
-const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
+mod app;
+mod constants;
 
 fn main() {
 	let keymap = Keymap::load("./config/keymap.json");
 	
 	let map = Map::load("./config/map.json").unwrap();
 
-    App::new()
-		.insert_resource(keymap)
-		.insert_resource(map)
-		.add_plugins(DefaultPlugins.set(LogPlugin {
-			level: bevy::log::Level::INFO,
-			..Default::default()
-		}))
-		
-		.add_startup_system(initial_grab_cursor)
-		.add_state::<GameState>()	
-		.add_plugin(SplashPlugin)
-        .add_plugin(MenuPlugin)
-		.add_plugin(GamePlugin)
-		.add_plugin(GameOverPlugin)
-		.add_startup_system(asset_loading)
-		// .add_plugin(WorldInspectorPlugin::new())
-		.run();
-}
-fn asset_loading(mut commands: Commands, assets: Res<AssetServer>) {
-    commands.insert_resource(GameAssets {
-        bullet_scene: assets.load("Bullet.glb#Scene0"),
-    });
+	run_app(map);
 }
 
 

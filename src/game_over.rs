@@ -1,5 +1,8 @@
+use bevy::prelude::*;
+
 use crate::*;
 use crate::despawn::despawn_screen;
+use crate::types::GameState;
 
 pub struct GameOverPlugin;
 
